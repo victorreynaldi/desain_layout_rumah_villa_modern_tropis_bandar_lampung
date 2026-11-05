@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Denah 2D Arsitektural & Jaringan MEP Final — Villa Tropis Kontur 10% (36m)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    background: #f1f5f9; color: #1e293b; padding: 18px;
+  }
+  .header-bar {
+    max-width: 1420px; margin: 0 auto 14px; background: #ffffff;
+    border: 1px solid #cbd5e1; border-radius: 12px; padding: 14px 20px;
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+  }
+  .header-title h1 { font-size: 16px; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; }
+  .header-title p { font-size: 12px; color: #64748b; margin-top: 2px; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; }
+  .btn {
+    padding: 7px 13px; font-size: 11.5px; font-weight: 600;
+    border: 1px solid #cbd5e1; background: #f8fafc; color: #334155;
+    border-radius: 7px; cursor: pointer; transition: all 0.15s;
+  }
+  .btn:hover { background: #e2e8f0; }
+  .btn.active { background: #0284c7; border-color: #0369a1; color: #ffffff; }
+  .btn.mep-btn.active { background: #0d9488; border-color: #0f766e; color: #ffffff; }
+  .btn.roof-btn.active { background: #b45309; border-color: #92400e; color: #ffffff; }
+
+  .plans-grid {
+    max-width: 1420px; margin: 0 auto;
+    display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; align-items: flex-start;
+  }
+  .plan-card {
+    background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px;
+    padding: 12px; box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  }
+  .plan-title {
+    font-size: 12.5px; font-weight: 700; color: #0f172a; text-align: center;
+    padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0;
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+
+  /* Tipografi SVG */
+  .room-label { font-family: 'Segoe UI', sans-serif; font-weight: 700; fill: #1e293b; text-anchor: middle; }
+  .room-dim { font-family: 'Segoe UI', sans-serif; font-size: 5.5px; font-weight: 500; fill: #475569; text-anchor: middle; }
+  .peil-tag { font-family: 'Segoe UI', sans-serif; font-size: 5.2px; font-weight: 700; fill: #b45309; text-anchor: middle; }
+  .mep-label { font-family: 'Segoe UI', sans-serif; font-size: 5.2px; font-weight: 700; text-anchor: middle; }
+
+  .legend {
+    max-width: 1420px; margin: 16px auto 0; background: #ffffff;
+    border: 1px solid #cbd5e1; border-radius: 12px; padding: 14px 18px;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 10px 18px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+  }
+  .legend-item { display: flex; align-items: center; gap: 9px; font-size: 11.5px; color: #334155; line-height: 1.35; }
+  .swatch { width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<div class="header-bar">
+  <div class="header-title">
+    <h1>Masterplan &amp; Denah 2D Arsitektural + Jaringan Plumbing MEP</h1>
+    <p>Lahan Trapesium 10m → 11,5m × 36m (Kontur 10%) | R. Kerja Leter L &amp; Kamar Anak 2 Maju (+1,3m) | Skylight Talang Keliling &amp; Dak Tandon | Shaft Pipa Bebas Ruang Keluarga</p>
+  </div>
+  <div class="toolbar">
+    <button class="btn mep-btn active" id="btnMep" onclick="toggleLayer('mep')">⚡ Layer Pipa MEP &amp; Shaft</button>
+    <button class="btn roof-btn active" id="btnRoof" onclick="toggleLayer('roof')">☀️ Overlay Skylight &amp; Dak Tandon</button>
+    <button class="btn active" id="btnDoors" onclick="toggleLayer('doors')">🚪 21 Pintu &amp; Gerbang</button>
+    <button class="btn active" id="btnDims" onclick="toggleLayer('dims')">📏 Garis Dimensi</button>
+    <button class="btn active" id="btnSite" onclick="toggleSiteplan()">🗺️ Masterplan 36m</button>
+  </div>
+</div>
+
+<!-- DEFINISI TEKSTUR SVG GLOBAL -->
+<svg width="0" height="0" style="position:absolute;">
+  <defs>
+    <pattern id="creamTile" width="16" height="16" patternUnits="userSpaceOnUse">
+      <rect width="16" height="16" fill="#f8f6f0"/>
+      <path d="M 16 0 L 0 0 0 16" fill="none" stroke="#e6e1d6" stroke-width="0.6"/>
+    </pattern>
+    <pattern id="woodParquet" width="18" height="6" patternUnits="userSpaceOnUse">
+      <rect width="18" height="6" fill="#ead2b5"/>
+      <line x1="0" y1="6" x2="18" y2="6" stroke="#c89f70" stroke-width="0.6"/>
+      <line x1="9" y1="0" x2="9" y2="6" stroke="#d4b085" stroke-width="0.5"/>
+    </pattern>
+    <pattern id="woodDeck" width="6" height="20" patternUnits="userSpaceOnUse">
+      <rect width="6" height="20" fill="#d9b382"/>
+      <line x1="6" y1="0" x2="6" y2="20" stroke="#a47545" stroke-width="0.7"/>
+    </pattern>
+    <pattern id="bathTile" width="10" height="10" patternUnits="userSpaceOnUse">
+      <rect width="10" height="10" fill="#e6f2f5"/>
+      <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#bce0ea" stroke-width="0.6"/>
+    </pattern>
+    <pattern id="serviceTile" width="12" height="12" patternUnits="userSpaceOnUse">
+      <rect width="12" height="12" fill="#e2e8f0"/>
+      <path d="M 12 0 L 0 0 0 12" fill="none" stroke="#cbd5e1" stroke-width="0.6"/>
+    </pattern>
+    <pattern id="softGrass" width="14" height="14" patternUnits="userSpaceOnUse">
+      <rect width="14" height="14" fill="#d8eed8"/>
+      <circle cx="4" cy="4" r="0.8" fill="#84a98c"/>
+      <circle cx="11" cy="10" r="0.8" fill="#84a98c"/>
+    </pattern>
+    <pattern id="poolWater" width="20" height="10" patternUnits="userSpaceOnUse">
+      <rect width="20" height="10" fill="#7dd3fc"/>
+      <path d="M 0 5 Q 5 2, 10 5 T 20 5" fill="none" stroke="#bae6fd" stroke-width="1"/>
+    </pattern>
+    <pattern id="koralWhite" width="8" height="8" patternUnits="userSpaceOnUse">
+      <rect width="8" height="8" fill="#f1f5f9"/>
+      <circle cx="2.5" cy="2.5" r="1.3" fill="#cbd5e1"/>
+      <circle cx="6" cy="6" r="1.2" fill="#94a3b8"/>
+    </pattern>
+    <filter id="softShadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0.8" dy="1" stdDeviation="1" flood-color="#0f172a" flood-opacity="0.16"/>
+    </filter>
+  </defs>
+</svg>
+
+<div class="plans-grid">
+
+  <!-- ==================== 1. DENAH 2D LANTAI 1 (±0,00m) + JARINGAN PLUMBING MEP ==================== -->
+  <div class="plan-card">
+    <div class="plan-title">1. Denah Lantai 1 (±0,00m) &amp; Jalur Plumbing Bawah Lantai</div>
+    <svg width="450" height="830" viewBox="-48 -28 450 810" xmlns="http://www.w3.org/2000/svg">
+      <!-- AREA LUAR & KONTEKS KONTUR -->
+      <polygon points="-18,0 326,0 320,750 -4,750" fill="url(#softGrass)" stroke="#475569" stroke-width="2.5"/>
+      <!-- Celah Koral Putih Barat Berundak (X: -14..0, Y: 150..598) -->
+      <polygon points="-14,150 0,150 0,598 -6,598" fill="url(#koralWhite)" stroke="#94a3b8" stroke-width="1"/>
+      <text x="-8" y="375" class="room-dim" transform="rotate(-90 -8 375)">CELAH KORAL BARAT &amp; SUB-DRAIN (-30cm/3m)</text>
+
+      <!-- ZONA KEBUN RAISED BEDS & KOLAM RENANG SEMI-HANGING (Y: 16..150) -->
+      <rect x="12" y="10" width="98" height="28" rx="2" fill="#b7e4c7" stroke="#2d6a4f" stroke-width="1.2"/>
+      <rect x="124" y="10" width="98" height="28" rx="2" fill="#b7e4c7" stroke="#2d6a4f" stroke-width="1.2"/>
+      <text x="117" y="27" class="room-label" font-size="6.2">ZONA KEBUN RAISED BEDS (PEIL -2,30m)</text>
+
+      <!-- Dek Kolam Renang & Sunbed Deck (Rata Garis X = 242 / 7,55m, Peil -0,45m) -->
+      <rect x="0" y="42" width="242" height="108" fill="url(#woodDeck)" stroke="#2c3539" stroke-width="2"/>
+      <rect x="10" y="50" width="182" height="76" rx="2" fill="url(#poolWater)" stroke="#0284c7" stroke-width="1.8"/>
+      <text x="101" y="86" class="room-label" font-size="7.5" fill="#0f172a">KOLAM RENANG SEMI-HANGING</text>
+      <text x="101" y="96" class="peil-tag">5,70 × 2,50 m | PEIL DEK -0,45m</text>
+      <!-- Railing Pengaman Tebing Kolam -->
+      <line x1="0" y1="42" x2="242" y2="42" stroke="#0284c7" stroke-width="3.5"/>
+      <line x1="0" y1="42" x2="0" y2="150" stroke="#0284c7" stroke-width="3.5"/>
+      <!-- 2 Kursi Sunbed di Sisi Selatan Dek Timur (Agar Akses Tangga Kebun Lega!) -->
+      <rect x="198" y="88" width="16" height="36" rx="2" fill="#ffffff" stroke="#64748b" stroke-width="0.9"/>
+      <rect x="219" y="88" width="16" height="36" rx="2" fill="#ffffff" stroke="#64748b" stroke-width="0.9"/>
+      <!-- Bordes Atas & Tangga Samping Turun ke Kebun (X: 242..268, Y: 44..86) -->
+      <rect x="242" y="44" width="26" height="42" fill="url(#woodDeck)" stroke="#2c3539" stroke-width="1.4"/>
+      <line x1="242" y1="52" x2="268" y2="52" stroke="#64748b" stroke-width="0.9"/>
+      <line x1="242" y1="60" x2="268" y2="60" stroke="#64748b" stroke-width="0.9"/>
+      <line x1="242" y1="68" x2="268" y2="68" stroke="#64748b" stroke-width="0.9"/>
+      <line x1="242" y1="76" x2="268" y2="76" stroke="#64748b" stroke-width="0.9"/>
+      <text x="255" y="38" class="peil-tag" font-size="4.8">TANGGA KEBUN ↓</text>
+      <!-- 2 Trap Tangga Naik dari Dek Kolam (-0,45m) ke Open Space (±0,00m) -->
+      <line x1="70" y1="138" x2="224" y2="138" stroke="#8d775f" stroke-width="1.2"/>
+      <line x1="70" y1="144" x2="224" y2="144" stroke="#8d775f" stroke-width="1.2"/>
+
+      <!-- ==================== LANTAI DASAR BANGUNAN LANTAI 1 (7,0m × 14,0m -> X: 0..224, Y: 150..598) ==================== -->
+      <rect x="0" y="150" width="224" height="448" fill="url(#creamTile)" stroke="#1e293b" stroke-width="3.5"/>
+
+      <!-- Border Side Deck 0,55m (X: 224..242, Y: 150..454) + Railing Pengaman Kaca Tempered -->
+      <rect x="224" y="150" width="18" height="304" fill="url(#woodDeck)" stroke="#2c3539" stroke-width="1.5"/>
+      <line x1="242" y1="150" x2="242" y2="454" stroke="#0284c7" stroke-width="3.5"/>
+      <line x1="224" y1="454" x2="242" y2="454" stroke="#0284c7" stroke-width="3.5"/>
+      <text x="235" y="302" class="room-label" font-size="5.5" transform="rotate(-90 235 302)">SIDE DECK 0,55m + RAILING PENGAMAN</text>
+
+      <!-- Jalan Akses Samping Timur (Stepped Ramp 10%: X = 275..312) -->
+      <rect x="275" y="0" width="37" height="750" fill="#e2e8f0" stroke="#64748b" stroke-width="1.4"/>
+      <text x="294" y="380" class="room-label" font-size="6.2" transform="rotate(90 294 380)">JALAN SAMPING STEPPED RAMP 10% (LEBAR 1,15m | -30cm/3m)</text>
+
+      <!-- 1. DERETAN RUANG SISI BARAT LANTAI 1 (RATA GARIS X = 70 / 2,20m): MUSHOLA, GUDANG, WUDHU, TOILET KEL, TANGGA & COURTYARD -->
+      <!-- A. Mushola (2,20 × 2,50m -> X: 0..70, Y: 150..230) -->
+      <rect x="0" y="150" width="70" height="80" fill="url(#woodParquet)" stroke="#1e293b" stroke-width="2.2"/>
+      <rect x="10" y="162" width="22" height="44" rx="1.5" fill="#86efac" stroke="#16a34a" stroke-width="0.8"/>
+      <rect x="38" y="162" width="22" height="44" rx="1.5" fill="#86efac" stroke="#16a34a" stroke-width="0.8"/>
+      <text x="35" y="216" class="room-label" font-size="6.2">MUSHOLA</text>
+      <text x="35" y="224" class="room-dim">2,20 × 2,50 m</text>
+
+      <!-- B. Gudang Lantai 1 (2,20 × 1,50m -> X: 0..70, Y: 230..278) -->
+      <rect x="0" y="230" width="70" height="48" fill="url(#serviceTile)" stroke="#1e293b" stroke-width="2"/>
+      <rect x="3" y="233" width="14" height="42" fill="#d4a373" stroke="#8d5b3c" stroke-width="0.8"/>
+      <text x="41" y="253" class="room-label" font-size="5.8">GUDANG LT.1</text>
+      <text x="41" y="261" class="room-dim">2,20 × 1,50 m</text>
+
+      <!-- C. Area Wudhu (2,20 × 1,30m -> X: 0..70, Y: 278..320) Lengkap dengan 3 Keran & Grill Drainase -->
+      <rect x="0" y="278" width="70" height="42" fill="url(#bathTile)" stroke="#1e293b" stroke-width="1.8"/>
+      <rect x="3" y="281" width="12" height="36" fill="#cbd5e1" stroke="#64748b" stroke-width="0.8"/>
+      <circle cx="9" cy="288" r="2" fill="#0284c7"/>
+      <circle cx="9" cy="299" r="2" fill="#0284c7"/>
+      <circle cx="9" cy="310" r="2" fill="#0284c7"/>
+      <line x1="70" y1="281" x2="70" y2="317" stroke="#8d5b3c" stroke-width="3.5" stroke-dasharray="3,2"/>
+      <text x="41" y="298" class="room-label" font-size="5.6">AREA WUDHU</text>
+      <text x="41" y="306" class="room-dim">3 Keran + Drain</text>
+
+      <!-- D. Toilet Keluarga / Powder Room (2,20 × 1,20m -> X: 0..70, Y: 320..358) -->
+      <rect x="0" y="320" width="70" height="38" fill="url(#bathTile)" stroke="#1e293b" stroke-width="2"/>
+      <rect x="4" y="333" width="10" height="14" rx="1" fill="#ffffff" stroke="#64748b" stroke-width="0.9"/>
+      <ellipse cx="18" cy="340" rx="6" ry="4.5" fill="#ffffff" stroke="#64748b" stroke-width="0.9"/>
+      <rect x="28" y="322" width="14" height="9" fill="#e6ccb2" stroke="#8d5b3c" stroke-width="0.8"/>
+      <text x="42" y="346" class="room-label" font-size="5.5">TOILET KEL.</text>
+      <text x="42" y="353" class="room-dim">2,2 × 1,2 m</text>
+
+      <!-- E. Tangga Naik (X: 0..32, Y: 358..451) & Inner Courtyard + Pohon 3D (X: 32..70, Y: 358..451) -->
+      <rect x="0" y="358" width="32" height="93" fill="#f1efe9" stroke="#1e293b" stroke-width="2"/>
+      <line x1="0" y1="438" x2="32" y2="438" stroke="#64748b" stroke-width="0.9"/>
+      <line x1="0" y1="424" x2="32" y2="424" stroke="#64748b" stroke-width="0.9"/>
+      <line x1="0" y1="410" x2="32" y2="410" stroke="#64748b" stroke-width="0.9"/>
+      <line x1="0" y1="396" x2="32" y2="396" stroke="#64748b" stroke-width="0.9"/>
+      <line x1="0" y1="382" x2="32" y2="382" stroke="#64748b" stroke-width="0.9"/>
+      <line x1="0" y1="368" x2="32" y2="368" stroke="#64748b" stroke-width="0.9"/>
+      <text x="16" y="405" class="room-label" font-size="5.8" transform="rotate(-90 16 405)">TANGGA NAIK ↑</text>
+
+      <rect x="32" y="358" width="38" height="93" fill="url(#softGrass)" stroke="#2d6a4f" stroke-width="2"/>
+      <line x1="70" y1="358" x2="70" y2="451" stroke="#0284c7" stroke-width="3.5"/>
+      <line x1="32" y1="451" x2="70" y2="451" stroke="#0284c7" stroke-width="3.5"/>
+      <circle cx="51" cy="404" r="13" fill="#52b788" fill-opacity="0.85" stroke="#1b4332" stroke-width="1"/>
+      <circle cx="51" cy="404" r="3" fill="#5c4033"/>
+      <text x="51" y="372" class="room-label" font-size="5.2" fill="#1b4332">COURTYARD</text>
+      <text x="51" y="443" class="room-dim">1,2 × 2,9m</text>
+
+      <!-- 2. OPEN SPACE KELUARGA, RUANG MAKAN, DAPUR & COFFEE BAR (4,80 × 9,50m -> X: 70..224, Y: 150..454) -->
+      <!-- Kabinet Dapur L + Kulkas + Sink Dapur & Island Jamuan Kopi / Coffee Bar -->
+      <rect x="203" y="158" width="18" height="145" fill="#d4a373" stroke="#8d5b3c" stroke-width="1"/>
+      <rect x="203" y="158" width="18" height="22" fill="#334155" stroke="#0f172a" stroke-width="1"/>
+      <rect x="206" y="210" width="12" height="18" rx="1.5" fill="#ffffff" stroke="#64748b" stroke-width="0.9"/>
+      <rect x="164" y="185" width="23" height="106" rx="2" fill="#f59e0b" stroke="#b45309" stroke-width="1.2" filter="url(#softShadow)"/>
+      <rect x="170" y="218" width="11" height="14" rx="1" fill="#ffffff" stroke="#64748b" stroke-width="0.8"/>
+      <circle cx="156" cy="202" r="4.5" fill="#8d5b3c"/>
+      <circle cx="156" cy="238" r="4.5" fill="#8d5b3c"/>
+      <circle cx="156" cy="274" r="4.5" fill="#8d5b3c"/>
+      <text x="175" y="178" class="room-label" font-size="5.8" fill="#b45309">ISLAND &amp; COFFEE BAR</text>
+
+      <!-- Meja Makan 6 Kursi -->
+      <rect x="88" y="232" width="54" height="30" rx="2.5" fill="#d9b382" stroke="#8d5b3c" stroke-width="1.1" filter="url(#softShadow)"/>
+      <text x="115" y="250" class="room-label" font-size="5.8">R. MAKAN</text>
+
+      <!-- Sofa L Ruang Keluarga & Credenza TV (100% BEBAS DARI PIPA PLAFON!) -->
+      <rect x="108" y="352" width="96" height="84" rx="3" fill="#f1efe9" stroke="#d6cfc2" stroke-width="0.8"/>
+      <path d="M 115 360 L 138 360 L 138 408 L 192 408 L 192 428 L 115 428 Z" fill="#ffffff" stroke="#64748b" stroke-width="1.1" filter="url(#softShadow)"/>
+      <rect x="148" y="372" width="32" height="22" rx="2" fill="#d9b382" stroke="#8d5b3c" stroke-width="0.9"/>
+      <rect x="134" y="443" width="56" height="8" rx="1" fill="#8d5b3c"/>
+      <text x="148" y="336" class="room-label" font-size="7">OPEN SPACE R. KELUARGA (BEBAS PIPA)</text>
+      <text x="148" y="345" class="room-dim">4,80 × 9,50 m | Bukaan Kaca ke Kolam &amp; Side Deck</text>
+
+      <!-- 3. ZONA DEPAN LANTAI 1: KAMAR TAMU, KM TAMU DUAL-ACCESS, FOYER & RUANG TAMU (Y: 454..598) -->
+      <!-- KM Tamu (1,20 × 2,50m -> X: 102..141, Y: 454..534) -->
+      <rect x="102" y="454" width="39" height="80" fill="url(#bathTile)" stroke="#1e293b" stroke-width="2"/>
+      <rect x="104" y="456" width="35" height="22" fill="#cce3ea" stroke="#0284c7" stroke-width="0.8" stroke-dasharray="3,2"/>
+      <ellipse cx="115" cy="492" rx="6" ry="4.5" fill="#ffffff" stroke="#64748b" stroke-width="0.9"/>
+      <rect x="104" y="505" width="11" height="16" fill="#e6ccb2" stroke="#8d5b3c" stroke-width="0.8"/>
+      <text x="122" y="528" class="room-label" font-size="5.4">KM TAMU</text>
+
+      <!-- Kamar Tidur Tamu (2,60 × 2,50m -> X: 141..224, Y: 454..534) -->
+      <rect x="141" y="454" width="83" height="80" fill="url(#woodParquet)" stroke="#1e293b" stroke-width="2.2"/>
+      <rect x="170" y="464" width="50" height="44" rx="2" fill="#ffffff" stroke="#64748b" stroke-width="1" filter="url(#softShadow)"/>
+      <rect x="170" y="464" width="34" height="44" rx="1.5" fill="#bae6fd" stroke="#0284c7" stroke-width="0.7"/>
+      <rect x="144" y="457" width="16" height="34" fill="#d4a373" stroke="#8d5b3c" stroke-width="0.8"/>
+      <text x="182" y="520" class="room-label" font-size="6.2">KAMAR TAMU</text>
+      <text x="182" y="528" class="room-dim">2,60 × 2,50 m</text>
+
+      <!-- Foyer, Partisi Kabinet Sepatu, & Ruang Tamu (Y: 534..598) -->
+      <rect x="4" y="526" width="44" height="10" fill="#d4a373" stroke="#8d5b3c" stroke-width="1"/>
+      <text x="36" y="566" class="room-label" font-size="6.2">FOYER</text>
+      <rect x="124" y="544" width="76" height="44" rx="2" fill="#f1efe9" stroke="#d6cfc2" stroke-width="0.8"/>
+      <rect x="132" y="542" width="60" height="16" rx="2" fill="#ffffff" stroke="#64748b" stroke-width="1"/>
+      <rect x="146" y="564" width="32" height="13" rx="1.5" fill="#d9b382" stroke="#8d5b3c" stroke-width="0.8"/>
+      <text x="162" y="588" class="room-label" font-size="6.2">RUANG TAMU (3,8 × 2,0m)</text>
+
+      <!-- 4. CARPORT 2 MOBIL (PEIL -0,15m), LORONG TAMU, GARIS OVERSTEK KAMAR ANAK 2 & 3 GERBANG DEPAN (Y: 598..750) -->
+      <rect x="0" y="598" width="175" height="150" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
+      <!-- Proyeksi Overstek Kamar Anak 2 (+1,30m di Atas Carport: X = 0..96, Y = 598..640) -->
+      <rect x="0" y="598" width="96" height="42" fill="#fef3c7" fill-opacity="0.45" stroke="#d97706" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <text x="48" y="622" class="peil-tag" font-size="5.2">GARIS OVERSTEK KAMAR ANAK 2 (+1,30m)</text>
+      <rect x="18" y="644" width="52" height="92" rx="5" fill="#cbd5e1" stroke="#475569" stroke-width="1.1"/>
+      <rect x="98" y="644" width="52" height="92" rx="5" fill="#cbd5e1" stroke="#475569" stroke-width="1.1"/>
+      <text x="85" y="692" class="room-label" font-size="7">CARPORT 2 MOBIL (PEIL -0,15m)</text>
+      <!-- Stepping Stones Lorong Tamu (X: 185..216) -->
+      <rect x="185" y="608" width="30" height="130" fill="#f4e3cf" stroke="#8d775f" stroke-width="1" stroke-dasharray="6,4"/>
+      <text x="200" y="675" class="room-label" font-size="5.5" transform="rotate(-90 200 675)">LORONG TAMU</text>
+      <!-- Tembok Depan Tinggi Privat (2,50m) & 3 Gerbang Depan di Y = 748 -->
+      <line x1="0" y1="748" x2="172" y2="748" stroke="#1e293b" stroke-width="4" stroke-dasharray="8,2"/>
+      <line x1="172" y1="748" x2="185" y2="748" stroke="#1e293b" stroke-width="5"/>
+      <line x1="215" y1="748" x2="275" y2="748" stroke="#1e293b" stroke-width="5"/>
+
+      <!-- ==================== ★ LAYER JARINGAN PIPA MEP & SHAFT PADA LANTAI 1 (BEBAS RUANG KELUARGA!) ★ ==================== -->
+      <g class="layer-mep">
+        <!-- 1. SUMUR BOR HULU (X = 246, Y = 720) & PIPA SUPLAI AIR BERSIH (BIRU) KE SHAFT TIMUR (X = 218, Y = 454) -->
+        <circle cx="246" cy="720" r="10" fill="#0284c7" stroke="#0f172a" stroke-width="1.5"/>
+        <circle cx="246" cy="720" r="4" fill="#bae6fd"/>
+        <text x="246" y="705" class="mep-label" fill="#0369a1">★ SUMUR BOR (-0,15m)</text>
+        <path d="M 246 710 L 246 454 L 218 454" fill="none" stroke="#0284c7" stroke-width="2.4" stroke-dasharray="5,2"/>
+
+        <!-- ★ KOTAK SHAFT UTAMA TIMUR (DI DALAM DINDING Z = 26,0m / Y = 454, X = 160 & 218) & SHAFT BARAT (X = 6, Y = 224 & 338) -->
+        <rect x="212" y="448" width="12" height="12" fill="#0284c7" stroke="#0f172a" stroke-width="1.2"/>
+        <text x="195" y="445" class="mep-label" fill="#0284c7">SHAFT TIMUR-1 (AIR &amp; GREY)</text>
+        <rect x="156" y="448" width="12" height="12" fill="#9333ea" stroke="#0f172a" stroke-width="1.2"/>
+        <text x="145" y="468" class="mep-label" fill="#9333ea">SHAFT TIMUR-2 (WC)</text>
+        <rect x="2" y="332" width="11" height="12" fill="#9333ea" stroke="#0f172a" stroke-width="1.2"/>
+        <rect x="2" y="282" width="11" height="12" fill="#f97316" stroke="#0f172a" stroke-width="1.2"/>
+        <text x="38" y="274" class="mep-label" fill="#c2410c">SHAFT BARAT</text>
+
+        <!-- 2. DISTRIBUSI AIR BERSIH LANTAI 1 (BIRU) & AIR PANAS (MERAH) DARI SHAFT DINDING -->
+        <path d="M 218 454 L 112 454 L 112 508" fill="none" stroke="#0284c7" stroke-width="1.6"/>
+        <path d="M 218 454 L 218 220 L 176 220" fill="none" stroke="#0284c7" stroke-width="1.6"/>
+        <path d="M 8 338 L 8 285" fill="none" stroke="#0284c7" stroke-width="1.6"/>
+        <path d="M 214 454 L 122 454 L 122 466" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3,2"/>
+
+        <!-- 3. JALUR GREYWATER LANTAI 1 (ORANYE): WUDHU, TOILET KEL, KM TAMU, GREASE TRAP DAPUR -> BAK KONTROL -> SUMUR RESAPAN (X=258, Y=122) -->
+        <rect x="202" y="232" width="14" height="14" rx="2" fill="#f97316" stroke="#9a3412" stroke-width="1.2"/>
+        <text x="198" y="241" class="mep-label" fill="#c2410c" text-anchor="end">GREASE TRAP</text>
+        <!-- Jalur Greywater Barat (Wudhu & Toilet Kel + Buangan KM Master dari Shaft Barat) Menyusuri Luar Belakang (Y=145) ke Resapan Timur -->
+        <path d="M 7 340 L 7 145 L 250 145 L 258 122" fill="none" stroke="#f97316" stroke-width="2.2"/>
+        <rect x="3" y="141" width="9" height="9" fill="#f97316" stroke="#0f172a" stroke-width="1"/>
+        <text x="24" y="148" class="mep-label" fill="#c2410c">BK-1</text>
+        <!-- Jalur Greywater Timur (Dari Shaft Timur-1, KM Tamu, & Grease Trap Dapur) Lurus di Parit Taman Samping (X=250) ke Sumur Resapan -->
+        <path d="M 108 512 L 108 458 L 250 458 L 250 145" fill="none" stroke="#f97316" stroke-width="2.2"/>
+        <path d="M 176 225 L 209 239 L 250 239" fill="none" stroke="#f97316" stroke-width="1.8"/>
+        <rect x="245" y="453" width="9" height="9" fill="#f97316" stroke="#0f172a" stroke-width="1"/>
+        <circle cx="258" cy="116" r="11" fill="#f97316" stroke="#7c2d12" stroke-width="1.6"/>
+        <text x="258" y="118" class="mep-label" fill="#ffffff" font-size="4.5">RESAPAN</text>
+
+        <!-- 4. JALUR BLACKWATER KLOSET (UNGU): SHAFT BARAT & SHAFT TIMUR-2 -> BIO SEPTIC TANK (X=258, Y=174) + PIPA SEDOT WC KE DEPAN -->
+        <!-- Blackwater Barat (Kloset Toilet Kel + KM Master) Turun di X=4 -> Belok di Belakang Mushola (Y=148) -> Masuk Bio Septic Tank -->
+        <path d="M 16 340 L 4 340 L 4 148 L 258 148 L 258 160" fill="none" stroke="#9333ea" stroke-width="2.4" stroke-dasharray="5,2"/>
+        <!-- Blackwater Timur (Dari Shaft Timur-2 X=162, Y=454 + Kloset KM Tamu X=115, Y=492) -> Parit Luar X=262 -> Bio Septic Tank -->
+        <path d="M 115 492 L 162 492 L 162 454 L 262 454 L 262 192" fill="none" stroke="#9333ea" stroke-width="2.5"/>
+        <rect x="248" y="160" width="20" height="32" rx="7" fill="#9333ea" stroke="#4c1d95" stroke-width="1.8"/>
+        <text x="258" y="175" class="mep-label" fill="#ffffff" font-size="4.6">BIO SEPTIC</text>
+        <text x="258" y="182" class="mep-label" fill="#f3e8ff" font-size="4.2">2.000L (-1,65m)</text>
+        <!-- Pipa Hisap Sedot WC Permanen (PVC 3") Menyusuri Bawah Stepped Ramp ke Gerbang Depan (Y=742) -->
+        <path d="M 268 176 L 278 176 L 278 742" fill="none" stroke="#9333ea" stroke-width="1.6" stroke-dasharray="2,2"/>
+        <rect x="273" y="738" width="10" height="8" fill="#9333ea" stroke="#0f172a" stroke-width="1"/>
+        <text x="256" y="744" class="mep-label" fill="#9333ea" font-size="4.5">OUTLET SEDOT WC →</text>
+
+        <!-- 5. DUA TANGKI PANEN AIR HUJAN (2 × 2.000L = 4.000L) DI KOLONG SUNBED DECK (X = 216, Y = 62 & 96) -->
+        <circle cx="216" cy="58" r="11" fill="#06b6d4" fill-opacity="0.85" stroke="#0e7490" stroke-width="1.5"/>
+        <circle cx="216" cy="82" r="11" fill="#06b6d4" fill-opacity="0.85" stroke="#0e7490" stroke-width="1.5"/>
+        <text x="216" y="60" class="mep-label" fill="#ffffff" font-size="4.3">HUJAN 1</text>
+        <text x="216" y="84" class="mep-label" fill="#ffffff" font-size="4.3">HUJAN 2</text>
+        <path d="M 216 47 L 216 24 L 160 24" fill="none" stroke="#06b6d4" stroke-width="1.8" stroke-dasharray="3,2"/>
+      </g>
+
+      <!-- LAYER 10 PINTU LANTAI 1 + 3 GERBANG DEPAN -->
+      <g class="layer-doors">
+        <path d="M 22 598 L 22 570 A 28 28 0 0 1 50 598" fill="none" stroke="#d97706" stroke-width="1.4"/>
+        <path d="M 147 534 L 147 508 A 26 26 0 0 1 173 534" fill="none" stroke="#d97706" stroke-width="1.3"/>
+        <path d="M 128 534 L 128 513 A 21 21 0 0 0 107 534" fill="none" stroke="#d97706" stroke-width="1.2"/>
+        <path d="M 141 526 L 120 526 A 21 21 0 0 1 141 505" fill="none" stroke="#d97706" stroke-width="1.2"/>
+        <path d="M 101 454 L 101 426 A 28 28 0 0 0 73 454" fill="none" stroke="#d97706" stroke-width="1.3"/>
+        <path d="M 58 320 L 58 342 A 22 22 0 0 1 36 320" fill="none" stroke="#d97706" stroke-width="1.2"/>
+        <path d="M 58 278 L 58 256 A 22 22 0 0 0 36 278" fill="none" stroke="#d97706" stroke-width="1.2"/>
+        <line x1="70" y1="156" x2="70" y2="222" stroke="#0284c7" stroke-width="4" stroke-dasharray="6,2"/>
+        <line x1="72" y1="150" x2="218" y2="150" stroke="#0284c7" stroke-width="4.5" stroke-dasharray="8,2"/>
+        <line x1="224" y1="156" x2="224" y2="448" stroke="#0284c7" stroke-width="4.5" stroke-dasharray="8,2"/>
+        <!-- Busur Gerbang Tamu & Gerbang Jalan Samping di Y=748 -->
+        <path d="M 185 748 L 185 718 A 30 30 0 0 1 215 748" fill="none" stroke="#d97706" stroke-width="1.5"/>
+        <path d="M 275 748 L 275 712 A 36 36 0 0 1 311 748" fill="none" stroke="#d97706" stroke-width="1.5"/>
+      </g>
+
+      <!-- LAYER DIMENSI LANTAI 1 -->
+      <g class="layer-dims">
+        <text x="-18" y="190" class="room-dim" text-anchor="end">2,5m</text>
+        <text x="-18" y="255" class="room-dim" text-anchor="end">1,5m</text>
+        <text x="-18" y="302" class="room-dim" text-anchor="end">1,3m</text>
+        <text x="-18" y="342" class="room-dim" text-anchor="end">1,2m</text>
+        <text x="-18" y="405" class="room-dim" text-anchor="end">2,9m</text>
+        <text x="-18" y="525" class="room-dim" text-anchor="end">4,6m</text>
+        <text x="-18" y="675" class="room-dim" text-anchor="end">5,5m</text>
+        <text x="35" y="-8" class="room-dim">2,20 m</text>
+        <text x="147" y="-8" class="room-dim">4,80 m (Open Space)</text>
+      </g>
+    </svg>
+  </div>
+
+  <!-- ==================== 2. DENAH 2D LANTAI 2 (+3,60m) + SKYLIGHT TALANG + DAK TANDON & SHAFT MEP ==================== -->
+  <div class="plan-card">
+    <div class="plan-title">2. Denah Lantai 2 (+3,60m), Skylight Talang, Roof Hatch &amp; MEP</div>
+    <svg width="450" height="830" viewBox="-48 -28 450 810" xmlns="http://www.w3.org/2000/svg">
+      <!-- KONTEKS AREA BAWAH SAMAR -->
+      <rect x="-12" y="0" width="332" height="150" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4,4"/>
+      <text x="120" y="80" class="room-dim">(VIEW KOLAM RENANG, KEBUN &amp; PETERNAKAN DI BAWAH ↑)</text>
+      <rect x="224" y="150" width="96" height="448" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4,4"/>
+      <rect x="0" y="598" width="320" height="150" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4,4"/>
+      <text x="160" y="685" class="room-dim">(ATAP KANOPI CARPORT &amp; TAMAN DEPAN DI BAWAH)</text>
+
+      <!-- LANTAI DASAR BANGUNAN LANTAI 2 (7,0m × 14,0m -> X: 0..224, Y: 150..598) -->
+      <rect x="0" y="150" width="224" height="448" fill="url(#creamTile)" stroke="#1e293b" stroke-width="3.5"/>
+
+      <!-- 1. ZONA BELAKANG LANTAI 2: MASTER SUITE, WIC UTUH 100%, KM BATHTUB, BALKON & SKY DECK (Y: 150..320) -->
+      <rect x="70" y="150" width="84" height="54" fill="url(#woodDeck)" stroke="#1e293b" stroke-width="1.5"/>
+      <line x1="70" y1="150" x2="154" y2="150" stroke="#0284c7" stroke-width="3.5"/>
+      <text x="112" y="182" class="room-label" font-size="6.2">BALKON MASTER</text>
+      <text x="112" y="191" class="room-dim">2,60 × 1,70 m</text>
+
+      <rect x="154" y="150" width="70" height="54" fill="url(#woodDeck)" stroke="#1e293b" stroke-width="1.5"/>
+      <line x1="154" y1="150" x2="224" y2="150" stroke="#0284c7" stroke-width="3.5"/>
+      <line x1="224" y1="150" x2="224" y2="204" stroke="#0284c7" stroke-width="3.5"/>
+      <rect x="152" y="150" width="4" height="54" fill="#2d6a4f"/>
+      <text x="189" y="182" class="room-label" font-size="6">SKY DECK KEL.</text>
+      <text x="189" y="191" class="room-dim">2,20 × 1,70 m</text>
+
+      <!-- Selasar Bypass (1,2m) + Kisi Kayu Louver 3D -->
+      <line x1="224" y1="206" x2="224" y2="355" stroke="#8d5b3c" stroke-width="4.5" stroke-dasharray="3,3"/>
+      <text x="206" y="265" class="room-label" font-size="5.6" transform="rotate(-90 206 265)">SELASAR BYPASS (1,2m)</text>
+
+      <!-- KM Master + Bathtub (2,20 × 2,30m -> X: 0..70, Y: 150..224) -->
+      <rect x="0" y="150" width="70" height="74" fill="url(#bathTile)" stroke="#1e293b" stroke-width="2.2"/>
+      <line x1="8" y1="150" x2="62" y2="150" stroke="#0284c7" stroke-width="4"/>
+      <rect x="10" y="156" width="46" height="20" rx="10" fill="#ffffff" stroke="#475569" stroke-width="1.2"/>
+      <rect x="2" y="182" width="26" height="40" fill="#cce3ea" stroke="#0284c7" stroke-width="0.9" stroke-dasharray="3,2"/>
+      <ellipse cx="59" cy="192" rx="5.5" ry="7" fill="#ffffff" stroke="#475569" stroke-width="0.9"/>
+      <rect x="48" y="210" width="18" height="12" fill="#e6ccb2" stroke="#8d5b3c" stroke-width="0.9"/>
+      <text x="42" y="198" class="room-label" font-size="5.6">KM MASTER</text>
+      <text x="42" y="206" class="room-dim">2,2 × 2,3m</text>
+
+      <!-- Walk-in Closet Utuh 100% (2,20 × 3,00m -> X: 0..70, Y: 224..320) -->
+      <rect x="0" y="224" width="70" height="96" fill="url(#woodParquet)" stroke="#1e293b" stroke-width="2.2"/>
+      <rect x="3" y="227" width="16" height="90" fill="#d4a373" stroke="#8d5b3c" stroke-width="1"/>
+      <rect x="52" y="227" width="15" height="44" fill="#d4a373" stroke="#8d5b3c" stroke-width="1"/>
+      <rect x="52" y="296" width="15" height="21" fill="#d4a373" stroke="#8d5b3c" stroke-width="1"/>
+      <text x="35" y="268" class="room-label" font-size="5.8">WALK-IN</text>
+      <text x="35" y="276" class="room-label" font-size="5.8">CLOSET UTUH</text>
+      <text x="35" y="284" class="room-dim">2,20 × 3,00 m</text>
+
+      <!-- Kamar Tidur Utama (3,60 × 3,60m -> X: 70..186, Y: 204..320) -->
+      <rect x="70" y="204" width="116" height="116" fill="url(#woodParquet)" stroke="#1e293b" stroke-width="2.2"/>
+      <rect x="118" y="236" width="64" height="56" rx="2.5" fill="#ffffff" stroke="#475569" stroke-width="1.1" filter="url(#softShadow)"/>
+      <rect x="118" y="236" width="42" height="56" rx="2" fill="#bae6fd" stroke="#0284c7" stroke-width="0.8"/>
+      <rect x="73" y="242" width="7" height="32" fill="#8d5b3c"/>
+      <text x="128" y="218" class="room-label" font-size="7">KAMAR TIDUR UTAMA</text>
+      <text x="128" y="226" class="room-dim">3,60 × 3,60 m</text>
+
+      <!-- 2. ZONA TENGAH LANTAI 2: TANGGA + JENDELA BARAT, VOID + TALANG SKYLIGHT, R. TV, LAUNDRY, KM ANAK & JANITOR + ROOF HATCH (Y: 320..496) -->
+      <text x="35" y="342" class="room-label" font-size="5.8">BORDES ATAS</text>
+      <!-- Tangga Tiba + Bukaan Jendela & Kisi Udara Dinding Barat Tangga (X = 0, Y: 366..442) -->
+      <rect x="0" y="358" width="32" height="93" fill="#f1efe9" stroke="#1e293b" stroke-width="2"/>
+      <line x1="0" y1="366" x2="0" y2="442" stroke="#0284c7" stroke-width="4.5"/>
+      <line x1="0" y1="368" x2="0" y2="440" stroke="#8d5b3c" stroke-width="3" stroke-dasharray="3,2"/>
+      <line x1="0" y1="438" x2="32" y2="438" stroke="#64748b" stroke-width="0.9"/>
+      <line x1="0" y1="422" x2="32" y2="422" stroke="#64748b" stroke-width="0.9"/>
+      <line x1="0" y1="406" x2="32" y2="406" stroke="#64748b" stroke-width="0.9"/>
+      <line x1="0" y1="390" x2="32" y2="390" stroke="#64748b" stroke-width="0.9"/>
+      <line x1="0" y1="374" x2="32" y2="374" stroke="#64748b" stroke-width="0.9"/>
+      <text x="16" y="405" class="room-label" font-size="5.6" transform="rotate(-90 16 405)">TANGGA + KISI BARAT</text>
+
+      <!-- Void Inner Courtyard (X: 32..70, Y: 358..451) -->
+      <rect x="32" y="358" width="38" height="93" fill="url(#softGrass)" stroke="#2d6a4f" stroke-width="2"/>
+      <line x1="32" y1="358" x2="70" y2="451" stroke="#52796f" stroke-width="0.8" stroke-dasharray="4,2"/>
+      <line x1="70" y1="358" x2="32" y2="451" stroke="#52796f" stroke-width="0.8" stroke-dasharray="4,2"/>
+      <circle cx="51" cy="404" r="12" fill="#52b788" fill-opacity="0.7" stroke="#1b4332" stroke-width="0.9"/>
+      <line x1="32" y1="358" x2="70" y2="358" stroke="#0284c7" stroke-width="3.5"/>
+      <line x1="70" y1="358" x2="70" y2="451" stroke="#0284c7" stroke-width="3.5"/>
+      <rect x="34" y="394" width="34" height="20" rx="2" fill="#ffffff" fill-opacity="0.9"/>
+      <text x="51" y="403" class="room-label" font-size="5.3">VOID TAMAN</text>
+      <text x="51" y="411" class="room-dim">1,2 × 2,9m</text>
+
+      <!-- Ruang TV Keluarga Lt.2 (X: 70..160, Y: 358..451) -->
+      <rect x="86" y="366" width="64" height="66" rx="2.5" fill="#f1efe9" stroke="#d6cfc2" stroke-width="0.8"/>
+      <path d="M 116 370 L 148 370 L 148 426 L 132 426 L 132 386 L 116 386 Z" fill="#ffffff" stroke="#475569" stroke-width="1"/>
+      <rect x="73" y="380" width="7" height="40" fill="#8d5b3c"/>
+      <text x="115" y="352" class="room-label" font-size="6.5">RUANG TV KELUARGA</text>
+
+      <!-- Deretan Servis Kanan: Laundry, KM Anak & Janitor + Tangga Monyet & Roof Hatch (X: 160..224, Y: 358..496) -->
+      <rect x="160" y="358" width="64" height="55" fill="url(#serviceTile)" stroke="#1e293b" stroke-width="2"/>
+      <rect x="165" y="392" width="16" height="16" rx="1.5" fill="#ffffff" stroke="#475569" stroke-width="0.9"/>
+      <rect x="183" y="392" width="16" height="16" rx="1.5" fill="#ffffff" stroke="#475569" stroke-width="0.9"/>
+      <line x1="224" y1="360" x2="224" y2="411" stroke="#8d5b3c" stroke-width="4.5" stroke-dasharray="3,2"/>
+      <text x="188" y="376" class="room-label" font-size="5.8">LAUNDRY</text>
+      <text x="188" y="384" class="room-dim">2,0 × 1,7m</text>
+
+      <rect x="160" y="413" width="64" height="54" fill="url(#bathTile)" stroke="#1e293b" stroke-width="2"/>
+      <rect x="198" y="415" width="24" height="50" fill="#cce3ea" stroke="#0284c7" stroke-width="0.9" stroke-dasharray="3,2"/>
+      <ellipse cx="184" cy="426" rx="4.8" ry="6.5" fill="#ffffff" stroke="#475569" stroke-width="0.9"/>
+      <rect x="162" y="418" width="10" height="16" fill="#e6ccb2" stroke="#8d5b3c" stroke-width="0.8"/>
+      <line x1="224" y1="422" x2="224" y2="456" stroke="#0284c7" stroke-width="4"/>
+      <text x="180" y="452" class="room-label" font-size="5.8">KM ANAK</text>
+      <text x="180" y="460" class="room-dim">2,0 × 1,7m</text>
+
+      <!-- ★ Janitor + Tangga Monyet Besi (Cat-Ladder) & Lubang Roof Hatch (0,8×0,8m) Menuju Dak Tandon ★ -->
+      <rect x="160" y="467" width="64" height="29" fill="url(#serviceTile)" stroke="#1e293b" stroke-width="2"/>
+      <rect x="178" y="469" width="15" height="16" rx="1.5" fill="#ffffff" stroke="#475569" stroke-width="0.9"/>
+      <!-- Simbol Tangga Monyet + Safety Cage + Roof Hatch di Sudut Janitor (X: 196..221, Y: 469..494) -->
+      <rect x="196" y="469" width="25" height="25" fill="#fef3c7" stroke="#d97706" stroke-width="1.5" stroke-dasharray="3,2"/>
+      <circle cx="208.5" cy="481.5" r="8.5" fill="none" stroke="#b45309" stroke-width="1.1"/>
+      <line x1="203" y1="491" x2="214" y2="491" stroke="#1e293b" stroke-width="1.8"/>
+      <line x1="205" y1="487" x2="212" y2="487" stroke="#d97706" stroke-width="1.2"/>
+      <text x="177" y="492" class="room-label" font-size="5.1">JANITOR</text>
+      <text x="208.5" y="478" class="mep-label" fill="#b45309" font-size="4.2">ROOF</text>
+      <text x="208.5" y="484" class="mep-label" fill="#b45309" font-size="4.2">HATCH ↑</text>
+
+      <!-- 3. ZONA DEPAN LANTAI 2: R. KERJA LETER L, MINI PANTRY SELASAR 2,0m, LORONG ROSTER & KAMAR ANAK KEMBAR (Y: 451..640) -->
+      <!-- Ruang Kerja Leter L Optimal (X: 0..74 di Void Y:451..496, Melebar X: 0..96 di Y:496..538) -->
+      <path d="M 0 451 L 74 451 L 74 496 L 96 496 L 96 538 L 0 538 Z" fill="url(#woodParquet)" stroke="#1e293b" stroke-width="2.2"/>
+      <line x1="6" y1="451" x2="70" y2="451" stroke="#0284c7" stroke-width="4"/>
+      <rect x="16" y="455" width="50" height="15" rx="1.5" fill="#d9b382" stroke="#8d5b3c" stroke-width="0.9"/>
+      <circle cx="41" cy="476" r="5" fill="#ffffff" stroke="#475569" stroke-width="0.9"/>
+      <rect x="3" y="455" width="9" height="79" fill="#d4a373" stroke="#8d5b3c" stroke-width="0.8"/>
+      <rect x="16" y="521" width="56" height="14" rx="2" fill="#ffffff" stroke="#475569" stroke-width="0.9"/>
+      <text x="46" y="497" class="room-label" font-size="6">★ R. KERJA LETER L</text>
+      <text x="46" y="505" class="room-dim">2,7m Dalam × 3,0m Lebar</text>
+
+      <!-- Mini Pantry di Selasar Lebar 2,0m (X: 74..96, Y: 451..496) -->
+      <rect x="74" y="451" width="22" height="45" fill="#fde68a" stroke="#1e293b" stroke-width="2"/>
+      <line x1="96" y1="452" x2="96" y2="495" stroke="#d97706" stroke-width="3"/>
+      <rect x="77" y="456" width="12" height="12" rx="1.5" fill="#ffffff" stroke="#475569" stroke-width="0.8"/>
+      <rect x="78" y="474" width="11" height="12" rx="1" fill="#334155"/>
+      <text x="128" y="470" class="room-label" font-size="5.3" fill="#b45309">◄ MINI PANTRY</text>
+      <text x="128" y="478" class="room-dim">(Selasar Lega 2,0m)</text>
+
+      <!-- Lorong Tengah (1,0m: X: 96..128, Y: 496..598) + Roster 3D & Kaca Intip + Dak Planter Box -->
+      <line x1="96" y1="598" x2="128" y2="598" stroke="#c2410c" stroke-width="5" stroke-dasharray="4,2"/>
+      <line x1="108" y1="598" x2="116" y2="598" stroke="#38bdf8" stroke-width="4.5"/>
+      <rect x="96" y="598" width="32" height="42" fill="#b7e4c7" stroke="#2d6a4f" stroke-width="1.2"/>
+      <circle cx="112" cy="619" r="6" fill="#52b788" stroke="#1b4332" stroke-width="0.8"/>
+      <text x="112" y="552" class="room-label" font-size="5.4" transform="rotate(-90 112 552)">LORONG (1m) + ROSTER</text>
+
+      <!-- Kamar Anak 2 — Maju +1,30m di Atas Carport, Kembar 3,00 × 3,20m (X: 0..96, Y: 538..640) -->
+      <rect x="0" y="538" width="96" height="102" fill="url(#woodParquet)" stroke="#1e293b" stroke-width="2.8"/>
+      <line x1="96" y1="602" x2="96" y2="636" stroke="#0284c7" stroke-width="4.5"/>
+      <rect x="4" y="541" width="58" height="14" fill="#d4a373" stroke="#8d5b3c" stroke-width="0.9"/>
+      <rect x="4" y="568" width="52" height="44" rx="2" fill="#ffffff" stroke="#475569" stroke-width="1" filter="url(#softShadow)"/>
+      <rect x="20" y="568" width="36" height="44" rx="1.5" fill="#bae6fd" stroke="#0284c7" stroke-width="0.7"/>
+      <rect x="52" y="623" width="38" height="13" rx="1.5" fill="#d9b382" stroke="#8d5b3c" stroke-width="0.9"/>
+      <text x="52" y="584" class="room-label" font-size="6.4">★ KAMAR ANAK 2 (MAJU)</text>
+      <text x="52" y="592" class="room-dim">3,00 × 3,20 m (Kembar)</text>
+      <text x="52" y="600" class="peil-tag">JENDELA SAMPING-DALAM →</text>
+
+      <!-- Kamar Anak 1 — Standar, Kembar 3,00 × 3,20m (X: 128..224, Y: 496..598) -->
+      <rect x="128" y="496" width="96" height="102" fill="url(#woodParquet)" stroke="#1e293b" stroke-width="2.5"/>
+      <line x1="224" y1="516" x2="224" y2="588" stroke="#0284c7" stroke-width="4.5"/>
+      <rect x="162" y="499" width="58" height="14" fill="#d4a373" stroke="#8d5b3c" stroke-width="0.9"/>
+      <rect x="132" y="528" width="52" height="44" rx="2" fill="#ffffff" stroke="#475569" stroke-width="1" filter="url(#softShadow)"/>
+      <rect x="148" y="528" width="36" height="44" rx="1.5" fill="#bae6fd" stroke="#0284c7" stroke-width="0.7"/>
+      <rect x="178" y="581" width="40" height="13" rx="1.5" fill="#d9b382" stroke="#8d5b3c" stroke-width="0.9"/>
+      <text x="176" y="544" class="room-label" font-size="6.4">KAMAR ANAK 1</text>
+      <text x="176" y="552" class="room-dim">3,00 × 3,20 m (Kembar)</text>
+      <text x="176" y="560" class="peil-tag">JENDELA KE TAMAN TIMUR →</text>
+
+      <!-- ==================== ★ OVERLAY ATAP SKYLIGHT TALANG KELILING & DAK TANDON AIR (+6,60m) ★ ==================== -->
+      <g class="layer-roof">
+        <!-- 1. Sabuk Talang Beton Keliling 35cm (Box Gutter) + Raised Vented Skylight di Atas Tangga & Void (X: -4..79, Y: 348..460) -->
+        <rect x="-4" y="348" width="83" height="112" rx="3" fill="none" stroke="#0891b2" stroke-width="3" stroke-dasharray="6,3"/>
+        <rect x="2" y="356" width="70" height="96" rx="2" fill="#bae6fd" fill-opacity="0.22" stroke="#0284c7" stroke-width="1.5"/>
+        <text x="38" y="354" class="mep-label" fill="#0e7490" font-size="4.6">SABUK TALANG BETON 35cm &amp; VENTED SKYLIGHT (+6,6m)</text>
+
+        <!-- 2. Dak Beton Servis Tandon Air (1.500L), Booster Pump, Solar Water Heater Terangkat & Tangga Step-Over (X: 158..224, Y: 358..496) -->
+        <rect x="158" y="358" width="66" height="138" fill="#94a3b8" fill-opacity="0.18" stroke="#475569" stroke-width="2" stroke-dasharray="5,3"/>
+        <!-- Tandon Air 1.500L + Booster Pump -->
+        <circle cx="190" cy="388" r="16" fill="#0284c7" fill-opacity="0.32" stroke="#0369a1" stroke-width="1.8"/>
+        <text x="190" y="387" class="mep-label" fill="#0f172a" font-size="4.8">TANDON ATAS</text>
+        <text x="190" y="393" class="mep-label" fill="#0369a1" font-size="4.4">1.500L (+6,9m)</text>
+        <!-- Panel Solar Water Heater Terangkat (+8,2m) -->
+        <rect x="172" y="422" width="36" height="28" rx="2" fill="#1e3a8a" fill-opacity="0.30" stroke="#1e3a8a" stroke-width="1.4"/>
+        <text x="190" y="436" class="mep-label" fill="#1e3a8a" font-size="4.5">SOLAR HEATER</text>
+        <text x="190" y="442" class="mep-label" fill="#1e3a8a" font-size="4.2">TERANGKAT (+8,2m)</text>
+        <!-- 3 Anak Tangga Step-Over dari Dak Tandon ke Talang Atap Tengah (X: 150..162, Y: 364..382) -->
+        <rect x="150" y="364" width="12" height="18" fill="#f59e0b" stroke="#b45309" stroke-width="1"/>
+        <text x="146" y="375" class="mep-label" fill="#b45309" font-size="4.3" text-anchor="end">STEP-OVER ←</text>
+      </g>
+
+      <!-- ==================== ★ LAYER JARINGAN PIPA MEP & SHAFT PADA LANTAI 2 (0% LEWAT RUANG KELUARGA!) ★ ==================== -->
+      <g class="layer-mep">
+        <!-- Kotak Shaft Timur-1 (X=212, Y=448), Shaft Timur-2 (X=156, Y=448) & Shaft Barat (X=2, Y=216) -->
+        <rect x="212" y="448" width="12" height="12" fill="#0284c7" stroke="#0f172a" stroke-width="1.2"/>
+        <rect x="156" y="448" width="12" height="12" fill="#9333ea" stroke="#0f172a" stroke-width="1.2"/>
+        <rect x="2" y="216" width="11" height="12" fill="#9333ea" stroke="#0f172a" stroke-width="1.2"/>
+
+        <!-- 1. Jembatan Pipa Air Dingin (Biru) & Air Panas (Merah) di Plafon/Attic Y=324 (Z=22,85m Selatan Void -> Langsung ke Shaft Barat & KM Master!) -->
+        <path d="M 190 404 L 218 454 L 218 324 L 8 324 L 8 185" fill="none" stroke="#0284c7" stroke-width="1.8" stroke-dasharray="4,2"/>
+        <path d="M 190 422 L 214 454 L 214 328 L 12 328 L 12 170" fill="none" stroke="#ef4444" stroke-width="1.8" stroke-dasharray="3,2"/>
+        <text x="115" y="333" class="mep-label" fill="#dc2626" font-size="4.5">◄ JEMBATAN PIPA AIR DINGIN &amp; PANAS DI PLAFON BORDES (TANPA U-TRAP TANAH)</text>
+
+        <!-- 2. Jalur Blackwater Kloset KM Anak (X=184, Y=426) Ditarik Siku di Dalam Plat Servis ke Shaft Dinding Y=454 (X=162, Y=454) -->
+        <path d="M 184 426 L 162 426 L 162 454" fill="none" stroke="#9333ea" stroke-width="2.4"/>
+        <!-- Jalur Blackwater Kloset KM Master (X=59, Y=192) Masuk ke Shaft Barat (X=6, Y=220) -->
+        <path d="M 59 192 L 6 192 L 6 220" fill="none" stroke="#9333ea" stroke-width="2.4"/>
+
+        <!-- 3. Jalur Greywater Lt.2 (Oranye): Mini Pantry (X=83, Y=462), Laundry (Y=398), KM Anak, & Janitor -> Masuk ke Shaft Timur-1 (X=218, Y=454) -->
+        <path d="M 83 462 L 83 454 L 218 454" fill="none" stroke="#f97316" stroke-width="2"/>
+        <path d="M 180 400 L 218 400 L 218 480 L 185 480" fill="none" stroke="#f97316" stroke-width="2"/>
+        <!-- Greywater Bathtub, Shower & Wastafel Master -> Masuk ke Shaft Barat (X=8, Y=216) -->
+        <path d="M 55 215 L 8 215 L 8 168" fill="none" stroke="#f97316" stroke-width="2"/>
+
+        <!-- 4. Pipa Talang Air Hujan (Cyan) dari Sabuk Talang Skylight (X=76, Y=352) -> Dinding Timur (X=222) -> Turun ke Tangki Hujan Kolong Dek -->
+        <path d="M 76 352 L 222 352 L 222 150" fill="none" stroke="#06b6d4" stroke-width="2.2" stroke-dasharray="4,2"/>
+      </g>
+
+      <!-- LAYER 11 TITIK PINTU LANTAI 2 -->
+      <g class="layer-doors">
+        <path d="M 80 320 L 80 294 A 26 26 0 0 1 106 320" fill="none" stroke="#d97706" stroke-width="1.3"/>
+        <path d="M 70 296 L 46 296 A 24 24 0 0 1 70 272" fill="none" stroke="#d97706" stroke-width="1.2"/>
+        <path d="M 48 224 L 48 204 A 20 20 0 0 0 28 224" fill="none" stroke="#d97706" stroke-width="1.2"/>
+        <line x1="76" y1="204" x2="148" y2="204" stroke="#0284c7" stroke-width="4.5" stroke-dasharray="7,2"/>
+        <line x1="188" y1="204" x2="222" y2="204" stroke="#0284c7" stroke-width="4.5" stroke-dasharray="6,2"/>
+        <path d="M 160 362 L 180 362 A 20 20 0 0 1 160 382" fill="none" stroke="#d97706" stroke-width="1.2"/>
+        <path d="M 160 464 L 180 464 A 20 20 0 0 0 160 444" fill="none" stroke="#d97706" stroke-width="1.2"/>
+        <path d="M 160 492 L 180 492 A 20 20 0 0 0 160 472" fill="none" stroke="#d97706" stroke-width="1.2"/>
+        <path d="M 96 499 L 74 499 A 22 22 0 0 0 96 521" fill="none" stroke="#d97706" stroke-width="1.2"/>
+        <path d="M 128 516 L 152 516 A 24 24 0 0 1 128 540" fill="none" stroke="#d97706" stroke-width="1.3"/>
+        <path d="M 96 544 L 72 544 A 24 24 0 0 0 96 568" fill="none" stroke="#d97706" stroke-width="1.3"/>
+      </g>
+
+      <!-- LAYER DIMENSI LANTAI 2 -->
+      <g class="layer-dims">
+        <text x="-18" y="235" class="room-dim" text-anchor="end">5,30 m</text>
+        <text x="-18" y="405" class="room-dim" text-anchor="end">4,10 m</text>
+        <text x="-18" y="475" class="room-dim" text-anchor="end">1,40 m</text>
+        <text x="-18" y="518" class="room-dim" text-anchor="end">1,30 m</text>
+        <text x="-18" y="589" class="room-dim" text-anchor="end">3,20 m</text>
+        <text x="-18" y="622" class="peil-tag" text-anchor="end">+1,30m Maju</text>
+        <text x="48" y="655" class="room-dim">3,00 m</text>
+        <text x="112" y="655" class="room-dim">1,0m</text>
+        <text x="176" y="612" class="room-dim">3,00 m</text>
+      </g>
+    </svg>
+  </div>
+
+  <!-- ==================== 3. MASTERPLAN LAHAN KONTUR 10%, 3 UNDAKAN TERNAK & SKEMA PLUMBING UTUH (36m) ==================== -->
+  <div class="plan-card" id="siteplanCard">
+    <div class="plan-title">3. Masterplan Kontur 10% &amp; Jaringan Utilitas (36m)</div>
+    <svg width="420" height="830" viewBox="-62 -15 400 960" xmlns="http://www.w3.org/2000/svg">
+      <!-- POLIGON LAHAN TRAPESIUM SIMETRIS (10,0m DEPAN -> 11,5m BELAKANG × 36,0m) -->
+      <polygon points="0,914 240,914 258,20 -18,20" fill="url(#softGrass)" stroke="#1e293b" stroke-width="2.5"/>
+
+      <!-- Celah Koral Barat + Pipa Sub-Drain French Drain -->
+      <polygon points="-2.75,782 0,782 0,416 -9.75,416" fill="url(#koralWhite)" stroke="#94a3b8" stroke-width="0.8"/>
+      <line x1="-2" y1="880" x2="-11" y2="275" stroke="#06b6d4" stroke-width="1.8" stroke-dasharray="4,2"/>
+
+      <!-- 1. ZONA PETERNAKAN 3 UNDAKAN (@3,33m -> Z: 0..10m | Peil -2,65m s/d -3,60m) -->
+      <polygon points="-13,260 253,260 258,20 -18,20" fill="#f1f8e9" stroke="#33691e" stroke-width="1.5"/>
+      <rect x="14" y="48" width="146" height="65" rx="2" fill="#fff8e1" stroke="#8d775f" stroke-width="1.2"/>
+      <text x="87" y="80" class="room-label" font-size="7.2">UNDAKAN 1: GUDANG PAKAN</text>
+      <text x="87" y="90" class="peil-tag">PEIL -2,65m (3,33m)</text>
+
+      <rect x="14" y="115" width="146" height="68" rx="2" fill="#f5f2eb" stroke="#8d775f" stroke-width="1.5"/>
+      <text x="87" y="149" class="room-label" font-size="7.5">UNDAKAN 2: KANDANG UTAMA</text>
+      <text x="87" y="159" class="peil-tag">PEIL -2,98m (3,33m)</text>
+
+      <rect x="14" y="185" width="146" height="65" rx="2" fill="#a3b18a" stroke="#52796f" stroke-width="1.2"/>
+      <text x="87" y="218" class="room-label" font-size="7.2" fill="#ffffff">UNDAKAN 3: AREA UMBARAN</text>
+      <text x="87" y="228" class="peil-tag" style="fill:#fef3c7;">PEIL -3,31m s/d -3,60m</text>
+
+      <!-- Biodigester 4m³ + Bak Inlet + 2 Bak Slurry + Pipa Biogas -->
+      <g class="layer-mep">
+        <rect x="164" y="138" width="18" height="18" rx="2" fill="#10b981" stroke="#065f46" stroke-width="1.2"/>
+        <circle cx="182" cy="182" r="18" fill="#10b981" stroke="#065f46" stroke-width="1.8"/>
+        <text x="182" y="180" class="mep-label" fill="#064e3b" font-size="5">BIODIGESTER</text>
+        <text x="182" y="187" class="mep-label" fill="#064e3b" font-size="4.6">4m³ (-3,3m)</text>
+        <rect x="166" y="208" width="15" height="24" rx="1.5" fill="#059669" stroke="#064e3b" stroke-width="1"/>
+        <rect x="183" y="208" width="15" height="24" rx="1.5" fill="#059669" stroke="#064e3b" stroke-width="1"/>
+        <path d="M 182 164 L 182 78 L 160 78" fill="none" stroke="#eab308" stroke-width="2" stroke-dasharray="3,2"/>
+      </g>
+
+      <!-- 2. PAGAR WIREMESH + WILD TEA + 8 POHON BUFFER + SABUK CUT-OFF DRAIN (Z = 10m) -->
+      <line x1="-13" y1="260" x2="202" y2="260" stroke="#334155" stroke-width="2.5" stroke-dasharray="5,2"/>
+      <line x1="202" y1="260" x2="232" y2="260" stroke="#d97706" stroke-width="4.5"/>
+      <rect x="-12" y="262" width="214" height="12" rx="3" fill="#2e7d32"/>
+      <line x1="-11" y1="277" x2="202" y2="277" stroke="#0891b2" stroke-width="2.5" stroke-dasharray="6,2"/>
+      <circle cx="4" cy="277" r="6" fill="#06b6d4" stroke="#0e7490" stroke-width="1.2"/>
+      <circle cx="195" cy="277" r="6" fill="#06b6d4" stroke="#0e7490" stroke-width="1.2"/>
+      <text x="100" y="271" font-size="5.5" font-weight="bold" fill="#ffffff" text-anchor="middle">WIREMESH + 8 POHON BUFFER + CUT-OFF DRAIN (Z=10m)</text>
+
+      <!-- 3. ZONA KEBUN + KOLAM SEMI-HANGING + 2 TANGKI AIR HUJAN KOLONG DEK -->
+      <rect x="10" y="286" width="80" height="38" rx="2" fill="#b7e4c7" stroke="#52796f" stroke-width="1"/>
+      <rect x="101" y="286" width="80" height="38" rx="2" fill="#b7e4c7" stroke="#52796f" stroke-width="1"/>
+      <text x="95" y="308" class="room-label" font-size="7">ZONA KEBUN (PEIL -2,30m)</text>
+
+      <rect x="10" y="336" width="134" height="54" rx="2" fill="url(#poolWater)" stroke="#0284c7" stroke-width="1.8"/>
+      <text x="77" y="360" class="room-label" font-size="7.2">KOLAM SEMI-HANGING</text>
+      <text x="77" y="369" class="peil-tag">PEIL DEK -0,45m</text>
+      <rect x="144" y="336" width="37" height="54" fill="url(#woodDeck)" stroke="#8d775f" stroke-width="1"/>
+      <rect x="0" y="390" width="181" height="30" fill="url(#woodDeck)" stroke="#8d775f" stroke-width="1"/>
+
+      <g class="layer-mep">
+        <circle cx="162.5" cy="351" r="11" fill="#06b6d4" stroke="#0e7490" stroke-width="1.5"/>
+        <circle cx="162.5" cy="375" r="11" fill="#06b6d4" stroke="#0e7490" stroke-width="1.5"/>
+        <text x="162.5" y="353" class="mep-label" fill="#ffffff" font-size="4.4">HUJAN 1</text>
+        <text x="162.5" y="377" class="mep-label" fill="#ffffff" font-size="4.4">HUJAN 2</text>
+        <path d="M 162.5 339 L 162.5 305 L 140 305" fill="none" stroke="#06b6d4" stroke-width="1.8" stroke-dasharray="3,2"/>
+        <path d="M 162.5 305 L 162.5 148" fill="none" stroke="#06b6d4" stroke-width="1.8" stroke-dasharray="3,2"/>
+      </g>
+
+      <!-- 4. BANGUNAN VILLA (X: 0..168, Y: 420..766) + SKYLIGHT VOID + DAK TANDON + JARINGAN SHAFT -->
+      <rect x="0" y="420" width="168" height="346" fill="url(#creamTile)" stroke="#1e293b" stroke-width="2.5"/>
+      <rect x="168" y="420" width="13" height="238" fill="url(#woodDeck)" stroke="#8d775f" stroke-width="1"/>
+      <text x="84" y="535" class="room-label" font-size="8.5">BANGUNAN VILLA (PEIL ±0,00m)</text>
+      <text x="84" y="548" class="room-dim">7,00 × 14,00 m | R. Keluarga 100% Bebas Pipa</text>
+
+      <!-- Overlay Skylight Void & Dak Tandon pada Masterplan -->
+      <g class="layer-roof">
+        <rect x="2" y="565" width="52" height="72" fill="#bae6fd" fill-opacity="0.35" stroke="#0284c7" stroke-width="1.6" stroke-dasharray="4,2"/>
+        <text x="28" y="600" class="mep-label" fill="#0369a1" font-size="4.8">SKYLIGHT</text>
+        <text x="28" y="607" class="mep-label" fill="#0369a1" font-size="4.4">&amp; TALANG</text>
+        <rect x="120" y="565" width="48" height="96" fill="#94a3b8" fill-opacity="0.28" stroke="#334155" stroke-width="1.6" stroke-dasharray="4,2"/>
+        <circle cx="144" cy="592" r="12" fill="#0284c7" fill-opacity="0.35" stroke="#0369a1" stroke-width="1.5"/>
+        <text x="144" y="594" class="mep-label" fill="#0f172a" font-size="4.5">TANDON</text>
+        <rect x="130" y="612" width="28" height="20" fill="#1e3a8a" fill-opacity="0.3" stroke="#1e3a8a" stroke-width="1.2"/>
+        <text x="144" y="624" class="mep-label" fill="#1e3a8a" font-size="4.2">SOLAR</text>
+        <rect x="146" y="640" width="18" height="18" fill="#fef3c7" stroke="#d97706" stroke-width="1.2"/>
+        <text x="155" y="651" class="mep-label" fill="#b45309" font-size="4">HATCH</text>
+      </g>
+
+      <!-- Jaringan Pipa Masterplan (Shaft Barat, Shaft Timur, Bio Septic Tank & Sumur Resapan) -->
+      <g class="layer-mep">
+        <circle cx="192" cy="408" r="9.5" fill="#f97316" stroke="#9a3412" stroke-width="1.4"/>
+        <text x="192" y="410" class="mep-label" fill="#ffffff" font-size="4.4">RESAPAN</text>
+        <rect x="182" y="426" width="20" height="32" rx="8" fill="#9333ea" stroke="#581c87" stroke-width="1.6"/>
+        <text x="192" y="441" class="mep-label" fill="#ffffff" font-size="4.6">BIO SEPTIC</text>
+        <text x="192" y="448" class="mep-label" fill="#f3e8ff" font-size="4.2">2.000L (-1,65m)</text>
+        <!-- Jalur Pipa Siku dari Shaft Barat (X=4) & Shaft Timur (Y=650) ke Bio Septic & Resapan -->
+        <path d="M 4 560 L 4 416 L 192 416 L 192 426" fill="none" stroke="#9333ea" stroke-width="2" stroke-dasharray="4,2"/>
+        <path d="M 122 650 L 192 650 L 192 458" fill="none" stroke="#9333ea" stroke-width="2.2"/>
+        <path d="M 8 560 L 8 412 L 192 408" fill="none" stroke="#f97316" stroke-width="1.8"/>
+        <path d="M 164 650 L 186 650 L 186 408" fill="none" stroke="#f97316" stroke-width="1.8"/>
+        <path d="M 202 442 L 208 442 L 208 908" fill="none" stroke="#9333ea" stroke-width="1.5" stroke-dasharray="2,2"/>
+      </g>
+
+      <!-- 5. JALAN AKSES BELAKANG (STEPPED RAMP 10%) & CARPORT DEPAN + SUMUR BOR HULU -->
+      <polygon points="206,914 232,914 242,260 214,260" fill="#eceff1" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,2"/>
+      <text x="224" y="610" class="room-label" font-size="6.2" transform="rotate(88.8 224 610)">STEPPED RAMP 10% + PIPA SEDOT WC</text>
+
+      <polygon points="-2.75,766 132,766 132,914 0,914" fill="#eceff1" stroke="#64748b" stroke-width="1.5"/>
+      <rect x="0" y="766" width="72" height="32" fill="#fef3c7" fill-opacity="0.5" stroke="#b45309" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <text x="36" y="785" class="peil-tag" font-size="5">OVERSTEK KAMAR ANAK 2 (+1,3m)</text>
+      <rect x="20" y="804" width="44" height="84" rx="5" fill="#cfd8dc" stroke="#475569" stroke-width="1"/>
+      <rect x="76" y="804" width="44" height="84" rx="5" fill="#cfd8dc" stroke="#475569" stroke-width="1"/>
+      <text x="72" y="846" class="room-label" font-size="7.2">CARPORT PRIVAT</text>
+      <rect x="140" y="766" width="28" height="148" fill="#f4e3cf" stroke="#8d775f" stroke-width="1"/>
+
+      <!-- Sumur Bor Hulu (X = 186, Y = 882) -->
+      <g class="layer-mep">
+        <circle cx="186" cy="882" r="12" fill="#0284c7" stroke="#0f172a" stroke-width="1.8"/>
+        <circle cx="186" cy="882" r="5" fill="#bae6fd"/>
+        <text x="186" y="864" class="mep-label" fill="#0369a1" font-size="5.5">★ SUMUR BOR</text>
+        <text x="186" y="903" class="peil-tag" style="fill:#0369a1;">HULU (-0,15m)</text>
+        <path d="M 186 870 L 186 650 L 164 650 L 144 592" fill="none" stroke="#0284c7" stroke-width="2.2" stroke-dasharray="5,2"/>
+      </g>
+
+      <text x="-8" y="140" class="room-dim" text-anchor="end">10,0m</text>
+      <text x="-8" y="350" class="room-dim" text-anchor="end">6,5m</text>
+      <text x="-8" y="600" class="room-dim" text-anchor="end">14,0m</text>
+      <text x="-8" y="840" class="room-dim" text-anchor="end">5,5m</text>
+      <text x="120" y="8" class="room-label" font-size="7.2">← BELAKANG SIMETRIS 11,50m (HILIR -3,60m) →</text>
+      <text x="120" y="934" class="room-label" font-size="7.2">← DEPAN SIMETRIS 10,00m (HULU -0,15m) →</text>
+    </svg>
+  </div>
+</div>
+
+<!-- LEGENDA LENGKAP ARSITEKTUR & MEP -->
+<div class="legend">
+  <div class="legend-item"><div class="swatch" style="background:#0284c7; border:2px solid #0f172a;"></div><span><b>Air Bersih (Biru) &amp; Air Panas (Merah):</b> Sumur Bor Hulu (-0,15m) → Shaft Dinding Z=26m → Tandon 1.500L &amp; Solar Heater (+8,2m) → Jembatan Plafon Bordes ke KM Master</span></div>
+  <div class="legend-item"><div class="swatch" style="background:#f97316; border:2px solid #7c2d12;"></div><span><b>Jalur Greywater Lengkap (Oranye):</b> Pembuangan Tempat Wudhu (3 keran), Bathtub/Shower, 5 Wastafel, Laundry, Mini Pantry &amp; Grease Trap Dapur → Bak Kontrol → Sumur Resapan</span></div>
+  <div class="legend-item"><div class="swatch" style="background:#9333ea; border:2px solid #4c1d95;"></div><span><b>Jalur Blackwater Kloset (Ungu):</b> 4 Kloset turun melalui Shaft Dinding Z=26m &amp; Shaft Barat (0% lewat R. Keluarga!) → Bio Septic Tank 2.000L + Pipa Sedot WC ke depan</span></div>
+  <div class="legend-item"><div class="swatch" style="background:#bae6fd; border:2px dashed #0284c7;"></div><span><b>Raised Vented Skylight &amp; Talang Keliling 35cm:</b> Cahaya &amp; udara untuk pohon Courtyard; air hujan atap tertangkap sabuk talang → 2 Tangki Air Hujan (4.000L) di kolong Sunbed Deck</span></div>
+  <div class="legend-item"><div class="swatch" style="background:#fef3c7; border:2px dashed #d97706;"></div><span><b>Akses Maintenance Atap (Janitor):</b> Tangga Monyet Besi + Safety Cage di sudut ruang Janitor menembus Roof Hatch (0,8×0,8m) ke Dak Tandon + Tangga Step-Over ke Talang Skylight</span></div>
+  <div class="legend-item"><div class="swatch" style="background:#10b981; border:2px solid #064e3b;"></div><span><b>Biodigester Ternak 4m³ &amp; Cut-Off Drain:</b> Olah limbah Kandang Utama (-2,98m) jadi pupuk Bioslurry &amp; Biogas; sabuk drainase Z=10m cegah air hujan atas membanjiri kandang</span></div>
+</div>
+
+<script>
+  function toggleLayer(type) {
+    const map = {
+      mep:   { sel: '.layer-mep',   btn: 'btnMep' },
+      roof:  { sel: '.layer-roof',  btn: 'btnRoof' },
+      doors: { sel: '.layer-doors', btn: 'btnDoors' },
+      dims:  { sel: '.layer-dims',  btn: 'btnDims' }
+    };
+    const cfg = map[type];
+    if (!cfg) return;
+    const els = document.querySelectorAll(cfg.sel);
+    const btn = document.getElementById(cfg.btn);
+    const isHidden = els[0].style.display === 'none';
+    els.forEach(el => el.style.display = isHidden ? 'block' : 'none');
+    btn.classList.toggle('active', isHidden);
+  }
+  function toggleSiteplan() {
+    const card = document.getElementById('siteplanCard');
+    const btn = document.getElementById('btnSite');
+    const isHidden = card.style.display === 'none';
+    card.style.display = isHidden ? 'block' : 'none';
+    btn.classList.toggle('active', isHidden);
+  }
+</script>
+</body>
+</html>

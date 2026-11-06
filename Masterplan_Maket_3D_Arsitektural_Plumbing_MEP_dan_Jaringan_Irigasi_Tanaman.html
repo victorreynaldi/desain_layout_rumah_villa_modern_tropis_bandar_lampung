@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Maket 3D Arsitektural, MEP & Irigasi Tanaman Final — Septic Bebas Pohon & Box Sedot di Tembok Mati</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background: #0f172a; color: #f8fafc; overflow: hidden; }
+  #canvas-container { width: 100vw; height: 100vh; position: relative; }
+  .ui-panel {
+    position: absolute; top: 12px; left: 12px; z-index: 20;
+    background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(12px);
+    border: 1px solid rgba(148, 163, 184, 0.28); border-radius: 12px;
+    padding: 12px 14px; width: 405px; box-shadow: 0 12px 28px rgba(0,0,0,0.5);
+  }
+  .ui-panel h1 { font-size: 12.5px; font-weight: 700; color: #f8fafc; letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 3px; }
+  .ui-panel p { font-size: 10px; color: #94a3b8; line-height: 1.35; margin-bottom: 7px; }
+  .section-label { font-size: 9.5px; font-weight: 600; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.6px; margin: 6px 0 4px; }
+  .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  .btn {
+    padding: 5px 8px; font-size: 10px; font-weight: 500;
+    border: 1px solid #334155; background: #1e293b; color: #e2e8f0;
+    border-radius: 6px; cursor: pointer; transition: all 0.18s; text-align: center;
+  }
+  .btn:hover { background: #334155; border-color: #64748b; }
+  .btn.active { background: #0284c7; border-color: #38bdf8; color: #ffffff; font-weight: 600; }
+  .btn.accent { background: #b45309; border-color: #f59e0b; color: #ffffff; font-weight: 600; }
+  .btn.util-btn { background: #0d9488; border-color: #2dd4bf; color: #ffffff; font-weight: 600; }
+  .btn.irr-btn.active { background: #4d7c0f; border-color: #84cc16; color: #ffffff; font-weight: 600; }
+  .legend-box {
+    position: absolute; bottom: 12px; right: 12px; z-index: 20;
+    background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(12px);
+    border: 1px solid rgba(148, 163, 184, 0.28); border-radius: 10px;
+    padding: 10px 12px; font-size: 10px; color: #cbd5e1; max-width: 445px;
+  }
+  .legend-row { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; }
+  .legend-row:last-child { margin-bottom: 0; }
+  .dot { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.35); }
+  #labels-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 10; }
+  .floating-label {
+    position: absolute; transform: translate(-50%, -100%);
+    background: rgba(15, 23, 42, 0.88); color: #f8fafc;
+    padding: 3px 7px; border-radius: 5px; font-size: 9.5px; font-weight: 600;
+    border: 1px solid rgba(56, 189, 248, 0.45); white-space: nowrap;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+  }
+  .floating-label span { display: block; font-size: 8.5px; font-weight: 400; color: #93c5fd; text-align: center; }
+  .floating-label.highlight { border-color: #f59e0b; background: rgba(120, 53, 15, 0.94); }
+  .floating-label.highlight span { color: #fde68a; }
+  .floating-label.util-tag { border-color: #2dd4bf; background: rgba(17, 94, 89, 0.94); }
+  .floating-label.util-tag span { color: #99f6e4; }
+  .floating-label.irr-tag { border-color: #84cc16; background: rgba(54, 83, 20, 0.94); }
+  .floating-label.irr-tag span { color: #d9f99d; }
+</style>
+</head>
+<body>
+
+<div id="canvas-container">
+  <div id="labels-container"></div>
+
+  <div class="ui-panel">
+    <h1>Maket 3D Final — Arsitektur, MEP &amp; Irigasi</h1>
+    <p>Pad Septic/Resapan Bebas Pohon | Vent Gas di Belakang &amp; Box Sedot WC di Tembok Mati Depan | Jaringan Pipa Penyiraman Pohon &amp; Tanaman</p>
+
+    <div class="section-label">Tampilan Lantai &amp; Layer Utilitas</div>
+    <div class="btn-grid">
+      <button class="btn active" id="btnF1" onclick="toggleGroup('f1')">Lantai 1 (±0,00m)</button>
+      <button class="btn active" id="btnF2" onclick="toggleGroup('f2')">Lantai 2 (+3,40m)</button>
+      <button class="btn active" id="btnRoof" onclick="toggleGroup('roof')">Atap, Talang &amp; Skylight</button>
+      <button class="btn active" id="btnCanopy" onclick="toggleGroup('canopy')">Kanopi Carport</button>
+      <button class="btn util-btn active" id="btnUtils" onclick="toggleGroup('utils')">⚡ Pipa MEP &amp; Siringan</button>
+      <button class="btn irr-btn active" id="btnIrr" onclick="toggleGroup('irr')">🌱 Pipa Siram Tanaman</button>
+      <button class="btn" id="btnXray" onclick="toggleXray()">🔍 Mode Full X-Ray</button>
+      <button class="btn active" id="btnDoors" onclick="toggleDoors()">25 Pintu &amp; Gerbang</button>
+      <button class="btn active" id="btnLabels" style="grid-column: span 2;" onclick="toggleLabels()">Tampilkan / Sembunyikan Label Informasi &amp; Peil</button>
+    </div>
+
+    <div class="section-label">Sudut Pandang Kamera Cepat</div>
+    <div class="btn-grid">
+      <button class="btn accent" onclick="setCameraView('septicAndIrrigation')">★ Pad Septic &amp; Pipa Siram</button>
+      <button class="btn util-btn" onclick="setCameraView('frontGateCamlock')">★ Box Sedot WC &amp; Taman Depan</button>
+      <button class="btn accent" onclick="setCameraView('selasarAndPoolStair')">★ Selasar Kaca &amp; Tangga Kolam</button>
+      <button class="btn util-btn" onclick="setCameraView('farmAccessDigester')">★ Akses Ternak &amp; Digester Barat</button>
+      <button class="btn accent" onclick="setCameraView('uStairCourtyard')">★ Tangga U &amp; Courtyard Utuh</button>
+      <button class="btn util-btn" onclick="setCameraView('rearDrainOutlet')">★ Siringan &amp; Outlet Belakang</button>
+      <button class="btn util-btn" onclick="setCameraView('allPlumbingXray')">★ Cek Semua Pipa (X-Ray)</button>
+      <button class="btn accent" onclick="setCameraView('roofMaintenance')">★ Dak Tandon, Solar &amp; Hatch</button>
+    </div>
+  </div>
+
+  <div class="legend-box">
+    <div class="legend-row"><div class="dot" style="background:#84cc16;"></div><span><b>Jaringan Pipa Siram Tanaman (Hijau Limau):</b> 4 Keran Taman + Pipa Drip ke Pohon Depan, 3 Pohon Samping, Courtyard, Planter Lt.2 &amp; Kebun</span></div>
+    <div class="legend-row"><div class="dot" style="background:#9333ea;"></div><span><b>Pad Septic/Resapan Bebas Pohon (Z=18..21,2m):</b> Vent Gas di Dinding Z=18m; Box Sedot WC di Tembok Mati Depan (X=8,15m, Bukan di Gerbang!)</span></div>
+    <div class="legend-row"><div class="dot" style="background:#38bdf8;"></div><span><b>Selasar Sky Deck (Dinding 90cm + Kaca + Louver):</b> Kedap tempias hujan Timur &amp; nyamuk; Tangga Kolam &amp; Akses Ternak 100% bebas pipa</span></div>
+    <div class="legend-row"><div class="dot" style="background:#0ea5e9;"></div><span><b>Siringan Lahan &amp; Outlet Belakang:</b> U-Ditch sisi tembok + Overflow Hujan → BK-Akhir (-3,6m) → Irigasi Belakang</span></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+  // ==================== 1. INISIALISASI SCENE, KAMERA & RENDERER ====================
+  const container = document.getElementById('canvas-container');
+  const labelsContainer = document.getElementById('labels-container');
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0f172a);
+  scene.fog = new THREE.FogExp2(0x0f172a, 0.0045);
+
+  const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.25, 320);
+  camera.position.set(16.8, 5.8, 21.5);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  container.appendChild(renderer.domElement);
+
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.target.set(7.8, -0.8, 21.5);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.06;
+  controls.maxPolarAngle = Math.PI / 2 - 0.01;
+
+  // ==================== 2. PENCAHAYAAN & BAYANGAN MATAHARI (4096px) ====================
+  scene.add(new THREE.AmbientLight(0xffffff, 0.66));
+  const sunLight = new THREE.DirectionalLight(0xfffbeb, 0.96);
+  sunLight.position.set(28, 46, 32);
+  sunLight.target.position.set(4.5, -1, 18);
+  scene.add(sunLight);
+  scene.add(sunLight.target);
+  sunLight.castShadow = true;
+  sunLight.shadow.mapSize.set(4096, 4096);
+  sunLight.shadow.camera.near = 4;
+  sunLight.shadow.camera.far = 95;
+  sunLight.shadow.camera.left = -24;
+  sunLight.shadow.camera.right = 24;
+  sunLight.shadow.camera.top = 28;
+  sunLight.shadow.camera.bottom = -28;
+  sunLight.shadow.bias = -0.0003;
+  sunLight.shadow.normalBias = 0.02;
+  const fillLight = new THREE.DirectionalLight(0x93c5fd, 0.36);
+  fillLight.position.set(-24, 22, 10);
+  scene.add(fillLight);
+
+  // ==================== 3. GRUP LAYER & MATERIAL ====================
+  const groups = {
+    site: new THREE.Group(),
+    canopy: new THREE.Group(),
+    f1: new THREE.Group(),
+    f2: new THREE.Group(),
+    roof: new THREE.Group(),
+    utils: new THREE.Group(),
+    irr: new THREE.Group()
+  };
+  const doorGroups = { site: new THREE.Group(), f1: new THREE.Group(), f2: new THREE.Group() };
+  groups.site.add(doorGroups.site);
+  groups.f1.add(doorGroups.f1);
+  groups.f2.add(doorGroups.f2);
+  Object.values(groups).forEach(g => scene.add(g));
+
+  const mats = {
+    wallExt: new THREE.MeshStandardMaterial({ color: 0xf8f5f0, roughness: 0.72 }),
+    wallInt: new THREE.MeshStandardMaterial({ color: 0xfdfbf7, roughness: 0.78 }),
+    wallAccent: new THREE.MeshStandardMaterial({ color: 0xe6ccb2, roughness: 0.68 }),
+    boundaryWall: new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.85, side: THREE.DoubleSide }),
+    stoneWall: new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.90, side: THREE.DoubleSide }),
+    gutterMat: new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.75, side: THREE.DoubleSide }),
+    floorCream: new THREE.MeshStandardMaterial({ color: 0xf5f2eb, roughness: 0.5 }),
+    floorWood: new THREE.MeshStandardMaterial({ color: 0xdfb98c, roughness: 0.48, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
+    floorBath: new THREE.MeshStandardMaterial({ color: 0xd8ebef, roughness: 0.38, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
+    floorService: new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
+    roadPaving: new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.75, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
+    roadCurb: new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.7 }),
+    woodDeck: new THREE.MeshStandardMaterial({ color: 0xb07d4f, roughness: 0.62, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
+    woodFascia: new THREE.MeshStandardMaterial({ color: 0x8d5b3c, roughness: 0.55 }),
+    woodCabinet: new THREE.MeshStandardMaterial({ color: 0xd4a373, roughness: 0.52 }),
+    pantryMat: new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.42 }),
+    rosterMat: new THREE.MeshStandardMaterial({ color: 0xc2410c, roughness: 0.75 }),
+    glass: new THREE.MeshPhysicalMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.38, roughness: 0.08, transmission: 0.52 }),
+    glassSkylight: new THREE.MeshPhysicalMaterial({ color: 0xbae6fd, transparent: true, opacity: 0.48, roughness: 0.08, transmission: 0.58, side: THREE.DoubleSide }),
+    glassPeek: new THREE.MeshPhysicalMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.68, roughness: 0.08 }),
+    solarPanelMat: new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.18, metalness: 0.8 }),
+    hatchMat: new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.4, metalness: 0.3 }),
+    wiremeshMat: new THREE.MeshStandardMaterial({ color: 0x334155, transparent: true, opacity: 0.42, roughness: 0.5, metalness: 0.6, side: THREE.DoubleSide }),
+    water: new THREE.MeshStandardMaterial({ color: 0x0284c7, transparent: true, opacity: 0.82, roughness: 0.12 }),
+    grass: new THREE.MeshStandardMaterial({ color: 0x74a17e, roughness: 0.88, side: THREE.DoubleSide }),
+    grassDark: new THREE.MeshStandardMaterial({ color: 0x2d6a4f, roughness: 0.82, side: THREE.DoubleSide }),
+    foliageLight: new THREE.MeshStandardMaterial({ color: 0x52b788, roughness: 0.8 }),
+    foliageRedTip: new THREE.MeshStandardMaterial({ color: 0x40916c, roughness: 0.78 }),
+    treeTrunk: new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.9 }),
+    soil: new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.95, side: THREE.DoubleSide }),
+    concrete: new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.82 }),
+    koral: new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.85, side: THREE.DoubleSide }),
+    bedSheet: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.65 }),
+    bedBlanket: new THREE.MeshStandardMaterial({ color: 0x7dd3fc, roughness: 0.7 }),
+    rugMat: new THREE.MeshStandardMaterial({ color: 0xe7e5e4, roughness: 0.85, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
+    prayerMat: new THREE.MeshStandardMaterial({ color: 0x4ade80, roughness: 0.8, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
+    sofaMat: new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.72 }),
+    metalDark: new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.35, metalness: 0.55 }),
+    carRed: new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.3, metalness: 0.4 }),
+    carBlue: new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.3, metalness: 0.4 }),
+    doorLeaf: new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.48 }),
+    roofTile: new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.62, side: THREE.DoubleSide }),
+    utilWellBlue: new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.25, metalness: 0.35 }),
+    utilHotRed: new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.25, metalness: 0.35 }),
+    utilSepticPurple: new THREE.MeshStandardMaterial({ color: 0x9333ea, roughness: 0.30, metalness: 0.25 }),
+    utilVentLilac: new THREE.MeshStandardMaterial({ color: 0xc084fc, roughness: 0.28, metalness: 0.30 }),
+    utilGreyOrange: new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.28, metalness: 0.25 }),
+    utilRainCyan: new THREE.MeshStandardMaterial({ color: 0x06b6d4, roughness: 0.28, metalness: 0.30 }),
+    utilBioGreen: new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.32, metalness: 0.25 }),
+    utilGasGold: new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.28, metalness: 0.45 }),
+    utilIrrLime: new THREE.MeshStandardMaterial({ color: 0x84cc16, roughness: 0.26, metalness: 0.30 })
+  };
+
+  // ==================== 4. FUNGSI HELPER GEOMETRI & PEMIPAAN ORTOGONAL ====================
+  function xWestInner(z) { return -0.18 - ((36.0 - z) / 36.0) * 0.75; }
+  function xEastInner(z) { return 10.00 + ((36.0 - z) / 36.0) * 0.75; }
+
+  function addTrapezoidSlab(parent, xL1, xR1, z1, xL2, xR2, z2, yBottom, height, material, castShadow = true) {
+    const yTop = yBottom + height;
+    const v = [
+      xL1, yBottom, z1,  xR1, yBottom, z1,  xR2, yBottom, z2,  xL2, yBottom, z2,
+      xL1, yTop,    z1,  xR1, yTop,    z1,  xR2, yTop,    z2,  xL2, yTop,    z2
+    ];
+    const indices = [4,5,6, 4,6,7, 0,2,1, 0,3,2, 0,1,5, 0,5,4, 1,2,6, 1,6,5, 2,3,7, 2,7,6, 3,0,4, 3,4,7];
+    const indexedGeom = new THREE.BufferGeometry();
+    indexedGeom.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+    indexedGeom.setIndex(indices);
+    const geom = indexedGeom.toNonIndexed();
+    geom.computeVertexNormals();
+    const mesh = new THREE.Mesh(geom, material);
+    mesh.castShadow = castShadow;
+    mesh.receiveShadow = true;
+    parent.add(mesh);
+    return mesh;
+  }
+
+  function addBox(parent, x1, z1, x2, z2, yBottom, height, material, castShadow = true) {
+    const w = Math.abs(x2 - x1), d = Math.abs(z2 - z1);
+    if (w < 0.005 || d < 0.005 || height < 0.005) return;
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, height, d), material);
+    mesh.position.set((x1 + x2) / 2, yBottom + height / 2, (z1 + z2) / 2);
+    mesh.castShadow = castShadow;
+    mesh.receiveShadow = true;
+    parent.add(mesh);
+    return mesh;
+  }
+
+  function addWall(parent, x1, z1, x2, z2, yBottom, height, thickness = 0.14, material = mats.wallInt) {
+    const dx = x2 - x1, dz = z2 - z1, len = Math.sqrt(dx * dx + dz * dz);
+    if (len < 0.01) return;
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(len, height, thickness), material);
+    mesh.position.set((x1 + x2) / 2, yBottom + height / 2, (z1 + z2) / 2);
+    mesh.rotation.y = -Math.atan2(dz, dx);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    parent.add(mesh);
+    return mesh;
+  }
+
+  function addSlantedBeam3D(parent, x1, y1, z1, x2, y2, z2, widthX = 0.06, heightY = 0.06, material = mats.metalDark) {
+    const p1 = new THREE.Vector3(x1, y1, z1), p2 = new THREE.Vector3(x2, y2, z2), dist = p1.distanceTo(p2);
+    if (dist < 0.01) return;
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(widthX, heightY, dist), material);
+    mesh.position.copy(p1).add(p2).multiplyScalar(0.5);
+    mesh.lookAt(p2);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    parent.add(mesh);
+    return mesh;
+  }
+
+  function addPipePath3D(parent, points, radius = 0.040, material = mats.utilWellBlue) {
+    for (let i = 0; i < points.length; i++) {
+      const pt = points[i];
+      const joint = new THREE.Mesh(new THREE.SphereGeometry(radius * 1.25, 10, 10), material);
+      joint.position.set(pt[0], pt[1], pt[2]);
+      parent.add(joint);
+      if (i < points.length - 1) {
+        const p1 = new THREE.Vector3(...pt), p2 = new THREE.Vector3(...points[i + 1]);
+        const dist = p1.distanceTo(p2);
+        if (dist > 0.01) {
+          const geom = new THREE.CylinderGeometry(radius, radius, dist, 10);
+          geom.rotateX(Math.PI / 2);
+          const seg = new THREE.Mesh(geom, material);
+          seg.position.copy(p1).add(p2).multiplyScalar(0.5);
+          seg.lookAt(p2);
+          parent.add(seg);
+        }
+      }
+    }
+  }
+
+  function addCylinder3D(parent, x, yBottom, z, radius, height, material, rotZ = 0) {
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, height, 18), material);
+    mesh.position.set(x, yBottom + height / 2, z);
+    if (rotZ !== 0) mesh.rotation.z = rotZ;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    parent.add(mesh);
+    return mesh;
+  }
+
+  // Helper Tiang Keran Taman Penyiraman 3D (Garden Tap Standpipe + Valve + Sprinkler Ring)
+  function addGardenTap3D(parent, x, yGround, z) {
+    addCylinder3D(parent, x, yGround - 0.35, z, 0.024, 0.95, mats.utilIrrLime);
+    addBox(parent, x - 0.06, z - 0.025, x + 0.06, z + 0.025, yGround + 0.56, 0.04, mats.pantryMat);
+    addBox(parent, x - 0.02, z - 0.09, x + 0.02, z + 0.02, yGround + 0.50, 0.04, mats.metalDark);
+  }
+
+  function addSafetyRailing3D(parent, x1, z1, x2, z2, yBottom, height = 1.05, numPosts = 4) {
+    addWall(parent, x1, z1, x2, z2, yBottom + 0.06, height - 0.10, 0.04, mats.glass);
+    addWall(parent, x1, z1, x2, z2, yBottom + height - 0.05, 0.05, 0.07, mats.metalDark);
+    addWall(parent, x1, z1, x2, z2, yBottom + 0.02, 0.04, 0.06, mats.metalDark);
+    for (let i = 0; i <= numPosts; i++) {
+      const t = i / numPosts, px = x1 + (x2 - x1) * t, pz = z1 + (z2 - z1) * t;
+      addBox(parent, px - 0.035, pz - 0.035, px + 0.035, pz + 0.035, yBottom, height + 0.02, mats.metalDark);
+    }
+  }
+
+  function addWindow3D(parent, x1, z1, x2, z2, yBottom, sillH = 0.85, winH = 1.55, wallH = 3.2, matWall = mats.wallExt) {
+    if (sillH > 0.04) addWall(parent, x1, z1, x2, z2, yBottom, sillH, 0.14, matWall);
+    addWall(parent, x1, z1, x2, z2, yBottom + sillH, winH, 0.05, mats.glass);
+    addWall(parent, x1, z1, x2, z2, yBottom + sillH, 0.05, 0.09, mats.metalDark);
+    addWall(parent, x1, z1, x2, z2, yBottom + sillH + winH - 0.05, 0.05, 0.09, mats.metalDark);
+    const topH = wallH - (sillH + winH);
+    if (topH > 0.04) addWall(parent, x1, z1, x2, z2, yBottom + sillH + winH, topH, 0.14, matWall);
+  }
+
+  function addLouverWall3D(parent, x1, z1, x2, z2, yBottom, height, numSlats = 12) {
+    for (let i = 0; i <= numSlats; i++) {
+      const t = i / numSlats, sx = x1 + (x2 - x1) * t, sz = z1 + (z2 - z1) * t;
+      addBox(parent, sx - 0.03, sz - 0.045, sx + 0.03, sz + 0.045, yBottom, height, mats.woodFascia);
+    }
+    addWall(parent, x1, z1, x2, z2, yBottom, 0.07, 0.11, mats.metalDark);
+    addWall(parent, x1, z1, x2, z2, yBottom + height - 0.07, 0.07, 0.11, mats.metalDark);
+  }
+
+  function addRosterPeekWall3D(parent, xStart, xEnd, zPos, yBottom, height) {
+    const peekX1 = (xStart + xEnd) / 2 - 0.14, peekX2 = (xStart + xEnd) / 2 + 0.14;
+    addWindow3D(parent, peekX1, zPos, peekX2, zPos, yBottom, 0.35, height - 0.70, height, mats.rosterMat);
+    const rows = 8, rowH = height / rows;
+    [[xStart, peekX1], [peekX2, xEnd]].forEach(([rx1, rx2]) => {
+      for (let r = 0; r < rows; r++) addWall(parent, rx1, zPos, rx2, zPos, yBottom + r * rowH, 0.045, 0.14, mats.rosterMat);
+      for (let c = 0; c <= 3; c++) {
+        const cx = rx1 + (rx2 - rx1) * (c / 3);
+        addBox(parent, cx - 0.02, zPos - 0.07, cx + 0.02, zPos + 0.07, yBottom, height, mats.rosterMat);
+      }
+    });
+  }
+
+  function addHipRoof3D(parent, x1, z1, x2, z2, yBase, ridgeH, ridgeInset = 2.0, roofMaterial = mats.roofTile) {
+    addBox(parent, x1, z1, x2, z2, yBase, 0.14, mats.woodFascia);
+    const rx1 = Math.min((x1 + x2) / 2 - 0.15, x1 + ridgeInset), rx2 = Math.max((x1 + x2) / 2 + 0.15, x2 - ridgeInset);
+    const rz1 = Math.min((z1 + z2) / 2 - 0.25, z1 + ridgeInset), rz2 = Math.max((z1 + z2) / 2 + 0.25, z2 - ridgeInset);
+    const yTop = yBase + 0.14 + ridgeH, yBot = yBase + 0.14;
+    const v = [x1,yBot,z1, x2,yBot,z1, x2,yBot,z2, x1,yBot,z2, rx1,yTop,rz1, rx2,yTop,rz1, rx2,yTop,rz2, rx1,yTop,rz2];
+    const indices = [0,1,5, 0,5,4, 1,2,6, 1,6,5, 2,3,7, 2,7,6, 3,0,4, 3,4,7, 4,5,6, 4,6,7];
+    const indexedGeom = new THREE.BufferGeometry();
+    indexedGeom.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+    indexedGeom.setIndex(indices);
+    const geom = indexedGeom.toNonIndexed();
+    geom.computeVertexNormals();
+    const mesh = new THREE.Mesh(geom, roofMaterial);
+    mesh.castShadow = (roofMaterial === mats.roofTile);
+    mesh.receiveShadow = true;
+    parent.add(mesh);
+    addBox(parent, rx1 - 0.06, rz1 - 0.06, rx2 + 0.06, rz2 + 0.06, yTop - 0.04, 0.09, mats.metalDark);
+  }
+
+  function addSkylightWithGutter3D(parent, x1, z1, x2, z2, yBase) {
+    addBox(parent, x1 - 0.15, z1 - 0.38, x2 + 0.38, z1 + 0.04, yBase - 0.02, 0.12, mats.gutterMat);
+    addBox(parent, x1 - 0.15, z2 - 0.04, x2 + 0.38, z2 + 0.38, yBase - 0.02, 0.12, mats.gutterMat);
+    addBox(parent, x2 - 0.04, z1 - 0.38, x2 + 0.38, z2 + 0.38, yBase - 0.02, 0.12, mats.gutterMat);
+    addWall(parent, x1 - 0.15, z1 - 0.36, x2 + 0.36, z1 - 0.36, yBase + 0.10, 0.16, 0.08, mats.gutterMat);
+    addWall(parent, x1 - 0.15, z2 + 0.36, x2 + 0.36, z2 + 0.36, yBase + 0.10, 0.16, 0.08, mats.gutterMat);
+
+    const curbH = 0.42;
+    addWall(parent, x1, z1, x2, z1, yBase, curbH, 0.16, mats.wallExt);
+    addWall(parent, x1, z2, x2, z2, yBase, curbH, 0.16, mats.wallExt);
+    addWall(parent, x1, z1, x1, z2, yBase, curbH, 0.16, mats.wallExt);
+    addWall(parent, x2, z1, x2, z2, yBase, curbH, 0.16, mats.wallExt);
+
+    const yLouver = yBase + curbH, hLouver = 0.40;
+    addLouverWall3D(parent, x1 + 0.06, z1, x2 - 0.06, z1, yLouver, hLouver, 8);
+    addLouverWall3D(parent, x1 + 0.06, z2, x2 - 0.06, z2, yLouver, hLouver, 8);
+    addLouverWall3D(parent, x1, z1 + 0.06, x1, z2 - 0.06, yLouver, hLouver, 12);
+    addLouverWall3D(parent, x2, z1 + 0.06, x2, z2 - 0.06, yLouver, hLouver, 12);
+    [[x1, z1], [x2, z1], [x2, z2], [x1, z2]].forEach(([px, pz]) => {
+      addBox(parent, px - 0.06, pz - 0.06, px + 0.06, pz + 0.06, yLouver, hLouver + 0.06, mats.metalDark);
+    });
+
+    const gx1 = x1 - 0.22, gx2 = x2 + 0.22, gz1 = z1 - 0.22, gz2 = z2 + 0.22, yGlassBase = yLouver + hLouver;
+    addHipRoof3D(parent, gx1, gz1, gx2, gz2, yGlassBase, 0.45, 0.85, mats.glassSkylight);
+    const midX = (x1 + x2) / 2;
+    for (let mz = z1 + 0.55; mz < z2; mz += 0.65) {
+      addSlantedBeam3D(parent, gx1, yGlassBase + 0.14, mz, midX, yGlassBase + 0.56, mz, 0.04, 0.04, mats.metalDark);
+      addSlantedBeam3D(parent, gx2, yGlassBase + 0.14, mz, midX, yGlassBase + 0.56, mz, 0.04, 0.04, mats.metalDark);
+    }
+  }
+
+  function addTree3D(parent, x, yBase, z, height = 3.4, crownRadius = 0.45, style = 'round') {
+    const trunkH = height * 0.46, trunkR = Math.min(0.09, crownRadius * 0.22);
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(trunkR * 0.7, trunkR, trunkH, 8), mats.treeTrunk);
+    trunk.position.set(x, yBase + trunkH / 2, z);
+    trunk.castShadow = true; trunk.receiveShadow = true;
+    parent.add(trunk);
+    const ringR = Math.min(0.24, crownRadius * 0.65);
+    const ring = new THREE.Mesh(new THREE.CylinderGeometry(ringR * 0.9, ringR, 0.05, 10), mats.woodFascia);
+    ring.position.set(x, yBase + 0.025, z);
+    parent.add(ring);
+    if (style === 'cone') {
+      const cone1 = new THREE.Mesh(new THREE.ConeGeometry(crownRadius * 0.92, height * 0.46, 12), mats.grassDark);
+      cone1.position.set(x, yBase + trunkH + height * 0.16, z);
+      cone1.castShadow = true; parent.add(cone1);
+      const cone2 = new THREE.Mesh(new THREE.ConeGeometry(crownRadius * 0.68, height * 0.36, 12), mats.foliageLight);
+      cone2.position.set(x, yBase + trunkH + height * 0.35, z);
+      cone2.castShadow = true; parent.add(cone2);
+    } else {
+      const c1 = new THREE.Mesh(new THREE.SphereGeometry(crownRadius * 0.92, 14, 12), mats.grassDark);
+      c1.position.set(x, yBase + trunkH + crownRadius * 0.35, z);
+      c1.scale.set(1, 0.80, 1); c1.castShadow = true; parent.add(c1);
+      const off2 = crownRadius * 0.14;
+      const c2 = new THREE.Mesh(new THREE.SphereGeometry(crownRadius * 0.72, 12, 10), mats.foliageLight);
+      c2.position.set(x + off2, yBase + trunkH + crownRadius * 0.85, z - off2 * 0.7);
+      c2.scale.set(1, 0.84, 1); c2.castShadow = true; parent.add(c2);
+      const c3 = new THREE.Mesh(new THREE.SphereGeometry(crownRadius * 0.64, 12, 10), mats.foliageRedTip);
+      c3.position.set(x - off2, yBase + trunkH + crownRadius * 0.62, z + off2 * 0.7);
+      c3.scale.set(1, 0.82, 1); c3.castShadow = true; parent.add(c3);
+    }
+  }
+
+  function addToilet3D(parent, x, yBase, z, rotY = 0) {
+    const g = new THREE.Group();
+    g.position.set(x, yBase, z); g.rotation.y = rotY;
+    addBox(g, -0.19, -0.26, 0.19, -0.09, 0.0, 0.76, mats.bedSheet);
+    addBox(g, -0.18, -0.09, 0.18, 0.25, 0.0, 0.42, mats.bedSheet);
+    parent.add(g);
+  }
+
+  function addSwingDoor(floorKey, hx, hz, closedX, closedZ, openX, openZ, yBottom, wallH = 3.2, matWall = mats.wallInt, doorH = 2.15) {
+    const dGroup = doorGroups[floorKey], fGroup = groups[floorKey];
+    if (wallH > doorH + 0.05) addWall(fGroup, hx, hz, closedX, closedZ, yBottom + doorH, wallH - doorH, 0.14, matWall);
+    addWall(dGroup, hx, hz, openX, openZ, yBottom, doorH, 0.05, mats.doorLeaf);
+    const vClosed = { x: closedX - hx, z: closedZ - hz }, vOpen = { x: openX - hx, z: openZ - hz }, pts = [];
+    for (let i = 0; i <= 20; i++) {
+      const a = (i / 20) * (Math.PI / 2);
+      pts.push(new THREE.Vector3(hx + Math.cos(a) * vClosed.x + Math.sin(a) * vOpen.x, yBottom + 0.035, hz + Math.cos(a) * vClosed.z + Math.sin(a) * vOpen.z));
+    }
+    dGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xf59e0b })));
+  }
+
+  function addSlidingDoor(floorKey, x1, z1, x2, z2, yBottom, doorH = 2.4, wallH = 3.2, matWall = mats.wallExt) {
+    const dGroup = doorGroups[floorKey], fGroup = groups[floorKey];
+    if (wallH > doorH + 0.05) addWall(fGroup, x1, z1, x2, z2, yBottom + doorH, wallH - doorH, 0.14, matWall);
+    addWall(dGroup, x1, z1, x2, z2, yBottom, doorH, 0.05, mats.glassPeek);
+    addWall(dGroup, x1, z1, x2, z2, yBottom + doorH - 0.05, 0.06, 0.09, mats.metalDark);
+    const midX = (x1 + x2) / 2, midZ = (z1 + z2) / 2;
+    addBox(dGroup, midX - 0.03, midZ - 0.03, midX + 0.03, midZ + 0.03, yBottom, doorH, mats.metalDark);
+  }
+
+  const labelList = [];
+  function addLabel(text, subtext, x, y, z, floorKey = 'all', styleType = 'normal') {
+    const div = document.createElement('div');
+    let cls = 'floating-label';
+    if (styleType === 'highlight') cls += ' highlight';
+    else if (styleType === 'util') cls += ' util-tag';
+    else if (styleType === 'irr') cls += ' irr-tag';
+    div.className = cls;
+    div.innerHTML = `${text}${subtext ? `<span>${subtext}</span>` : ''}`;
+    labelsContainer.appendChild(div);
+    labelList.push({ el: div, pos: new THREE.Vector3(x, y, z), floorKey });
+  }
+
+  // ==================== 5A. KONTUR LAHAN 10% TRAPESIUM, PAD KORAL SEPTIC BEBAS POHON & 3 POHON SAMPING ====================
+  for (let r = 0; r < 12; r++) {
+    const zStart = 36 - (r + 1) * 3, zEnd = 36 - r * 3, zR1 = zStart + 0.015, zR2 = zEnd - 0.015, zMid = (zR1 + zR2) / 2;
+    const ySurf = -0.15 - r * 0.30, soilTop = ySurf - 0.18, wallH = 2.20;
+    const wInStart = xWestInner(zStart), wInEnd = xWestInner(zEnd), eInStart = xEastInner(zStart), eInEnd = xEastInner(zEnd);
+
+    addTrapezoidSlab(groups.site, wInStart + 0.02, eInStart - 0.02, zR1, wInEnd + 0.02, eInEnd - 0.02, zR2, -4.5, 4.5 + soilTop, mats.soil, true);
+    addWall(groups.site, wInEnd - 0.08, zEnd, wInStart - 0.08, zStart, ySurf - 0.45, wallH + 0.45, 0.16, mats.boundaryWall);
+    addWall(groups.site, wInEnd - 0.08, zEnd, wInStart - 0.08, zStart, ySurf + wallH, 0.08, 0.20, mats.stoneWall);
+    addBox(groups.site, wInStart - 0.22, zStart - 0.12, wInStart - 0.01, zStart + 0.12, ySurf - 0.45, wallH + 0.50, mats.stoneWall);
+
+    addWall(groups.site, eInEnd + 0.08, zEnd, eInStart + 0.08, zStart, ySurf - 0.45, wallH + 0.45, 0.16, mats.boundaryWall);
+    addWall(groups.site, eInEnd + 0.08, zEnd, eInStart + 0.08, zStart, ySurf + wallH, 0.08, 0.20, mats.stoneWall);
+    addBox(groups.site, eInStart + 0.01, zStart - 0.12, eInStart + 0.22, zStart + 0.12, ySurf - 0.45, wallH + 0.50, mats.stoneWall);
+
+    addBox(groups.site, 8.60, zR1, 9.75, zR2, ySurf - 0.18, 0.21, mats.roadPaving);
+    addBox(groups.site, 8.55, zR1, 8.60, zR2, ySurf - 0.18, 0.24, mats.roadCurb);
+    addBox(groups.site, 9.75, zR1, 9.80, zR2, ySurf - 0.18, 0.24, mats.roadCurb);
+
+    // Siringan U-Ditch Grating Sepanjang Tembok Samping Barat
+    addWall(groups.site, wInEnd + 0.14, zEnd - 0.02, wInStart + 0.14, zStart + 0.02, ySurf - 0.22, 0.20, 0.26, mats.gutterMat);
+    addWall(groups.site, wInEnd + 0.14, zEnd - 0.05, wInStart + 0.14, zStart + 0.05, ySurf - 0.05, 0.03, 0.18, mats.water);
+
+    const outerStripW = ((eInStart + eInEnd) / 2) - 9.81;
+    addTrapezoidSlab(groups.site, 9.80, eInStart - 0.01, zR1, 9.80, eInEnd - 0.01, zR2, ySurf - 0.18, 0.18, mats.grass);
+    addTrapezoidSlab(groups.site, 9.83, eInStart - 0.04, zR1 + 0.1, 9.83, eInEnd - 0.04, zR2 - 0.1, ySurf, 0.42, mats.grassDark);
+    if (r >= 4 && r <= 10 && r !== 8 && outerStripW >= 0.36) {
+      const centerStripX = (9.81 + ((eInStart + eInEnd) / 2)) / 2;
+      addTree3D(groups.site, centerStripX, ySurf + 0.15, zMid, 2.7, Math.min(0.22, (outerStripW / 2) - 0.04), 'cone');
+    }
+    // Segmen r=2,3,4 (Z=21..30m) adalah Taman Rumput Pohon Samping; Segmen r=5 (Z=18..21m) adalah Pad Koral Servis Septic Tank (0% Pohon!)
+    if (r >= 2 && r <= 4) addBox(groups.site, 7.56, zR1, 8.54, zR2, ySurf - 0.18, 0.18, mats.grass);
+    if (r === 5) addBox(groups.site, 7.56, zR1, 8.54, zR2, ySurf - 0.18, 0.19, mats.koral);
+  }
+
+  addBox(groups.site, 7.56, 12.50, 8.54, 18.00, -2.65, 0.35, mats.grass);
+  addWall(groups.site, 7.56, 18.00, 8.54, 18.00, -2.30, 0.65, 0.14, mats.stoneWall);
+  // ★ Sekat Root-Barrier Beton di Z = 21,25m (Memisahkan Pad Koral Septic Tank Z=18..21,25m dari Akar Pohon Samping di Z >= 22,8m!)
+  addWall(groups.site, 7.56, 21.25, 8.54, 21.25, -2.85, 1.55, 0.12, mats.stoneWall);
+
+  // Tembok Batas Belakang Lahan (Z = -0,08m) + Saluran Irigasi / Siringan Batas Belakang Lahan (Z = -0,75m..-0,22m)
+  const wBack = xWestInner(0) - 0.16, eBack = xEastInner(0) + 0.16;
+  addWall(groups.site, wBack, -0.08, eBack, -0.08, -3.75, 2.45, 0.16, mats.boundaryWall);
+  addWall(groups.site, wBack, -0.08, eBack, -0.08, -1.30, 0.08, 0.22, mats.stoneWall);
+  [wBack + 0.1, 2.0, 5.0, 8.0, eBack - 0.1].forEach(px => addBox(groups.site, px - 0.12, -0.22, px + 0.12, -0.01, -3.75, 2.55, mats.stoneWall));
+
+  addBox(groups.site, wBack - 0.20, -0.82, eBack + 0.20, -0.18, -4.15, 0.35, mats.stoneWall);
+  addWall(groups.site, wBack - 0.20, -0.80, eBack + 0.20, -0.80, -3.80, 0.45, 0.12, mats.stoneWall);
+  addBox(groups.site, wBack - 0.15, -0.74, eBack + 0.15, -0.22, -3.80, 0.26, mats.water);
+
+  for (let kr = 0; kr < 8; kr++) {
+    const kz1 = 36 - (kr + 1) * 3 + 0.02, kz2 = 36 - kr * 3 - 0.02, ky = -0.15 - kr * 0.30;
+    addTrapezoidSlab(groups.site, xWestInner(kz1) + 0.26, -0.005, kz1, xWestInner(kz2) + 0.26, -0.005, kz2, ky - 0.20, 0.20, mats.koral);
+    addWall(groups.site, xWestInner(kz1) + 0.26, kz1, -0.005, kz1, ky - 0.30, 0.30, 0.08, mats.stoneWall);
+  }
+
+  // ★ 3 POHON TAMAN SAMPING DIGESER KE UTARA (Z = 28,40m, 25,60m, dan 22,80m -> 100% AMAN DARI BIO SEPTIC TANK & RESAPAN!)
+  [[28.40, -0.75, 'round'], [25.60, -1.05, 'cone'], [22.80, -1.35, 'round']].forEach(([tz, ty, st]) => {
+    addTree3D(groups.site, 8.05, ty, tz, 3.35, 0.38, st);
+  });
+
+  // ==================== 5B. ZONA PETERNAKAN 3 UNDAKAN: KORIDOR AKSES TIMUR 100% BEBAS PIPA & PINTU LENGKAP ====================
+  addTrapezoidSlab(groups.site, xWestInner(6.68) + 0.26, 8.54, 6.68, xWestInner(9.98) + 0.26, 8.54, 9.98, -3.10, 0.45, mats.grass);
+  addWall(groups.site, xWestInner(6.67) + 0.26, 6.67, 8.54, 6.67, -2.98, 0.35, 0.18, mats.stoneWall);
+  addBox(groups.site, 0.50, 7.20, 6.50, 9.40, -2.65, 0.08, mats.floorService);
+  addBox(groups.site, 0.68, 8.75, 4.80, 9.25, -2.57, 1.35, mats.woodCabinet);
+  addBox(groups.site, 0.68, 7.35, 1.25, 8.65, -2.57, 1.35, mats.woodCabinet);
+  addWall(groups.site, 0.50, 9.40, 6.50, 9.40, -2.57, 2.17, 0.14, mats.wallAccent);
+  addLouverWall3D(groups.site, 1.00, 9.42, 6.00, 9.42, -1.20, 0.70, 12);
+  addWall(groups.site, 0.50, 7.20, 0.50, 9.40, -2.57, 2.17, 0.14, mats.wallAccent);
+  addWall(groups.site, 6.50, 7.20, 6.50, 7.85, -2.57, 2.17, 0.14, mats.wallAccent);
+  addWall(groups.site, 6.50, 8.75, 6.50, 9.40, -2.57, 2.17, 0.14, mats.wallAccent);
+  addWall(groups.site, 0.50, 7.20, 5.30, 7.20, -2.57, 2.17, 0.14, mats.wallAccent);
+  addWall(groups.site, 6.15, 7.20, 6.50, 7.20, -2.57, 2.17, 0.14, mats.wallAccent);
+  addSwingDoor('site', 6.50, 8.75, 6.50, 7.85, 7.38, 8.75, -2.57, 2.17, mats.wallAccent, 2.00);
+  addSwingDoor('site', 6.15, 7.20, 5.30, 7.20, 6.15, 6.35, -2.57, 2.17, mats.wallAccent, 2.00);
+  addBox(groups.site, 5.25, 6.68, 6.20, 7.18, -2.82, 0.17, mats.woodDeck);
+  addHipRoof3D(groups.site, 0.20, 6.90, 6.80, 9.70, -0.40, 0.75, 1.10);
+  addTree3D(groups.site, 7.68, -2.65, 9.25, 3.3, 0.44, 'round');
+
+  // Koridor Jalan Setapak Paving & Tangga Antar-Undakan di Sisi Timur Peternakan (100% Bersih Bebas Pipa)
+  addBox(groups.site, 6.52, 6.68, 8.45, 9.85, -2.65, 0.04, mats.roadPaving);
+  addBox(groups.site, 6.80, 6.20, 8.25, 6.68, -2.82, 0.17, mats.woodDeck);
+  addBox(groups.site, 6.52, 3.34, 8.45, 6.20, -2.98, 0.04, mats.roadPaving);
+  addBox(groups.site, 6.80, 2.85, 8.25, 3.34, -3.15, 0.17, mats.woodDeck);
+  addBox(groups.site, 6.52, 0.55, 8.45, 2.85, -3.31, 0.04, mats.roadPaving);
+
+  // Undakan 2 (Kandang Utama di X = 1,55..6,50m)
+  addTrapezoidSlab(groups.site, xWestInner(3.34) + 0.26, 8.54, 3.34, xWestInner(6.66) + 0.26, 8.54, 6.66, -3.45, 0.47, mats.grass);
+  addWall(groups.site, xWestInner(3.33) + 0.26, 3.33, 8.54, 3.33, -3.31, 0.35, 0.18, mats.stoneWall);
+  addBox(groups.site, 1.55, 3.80, 6.50, 6.20, -2.98, 0.16, mats.concrete);
+  addWall(groups.site, 1.55, 3.80, 6.50, 3.80, -2.82, 1.05, 0.12, mats.wallExt);
+  addWall(groups.site, 1.55, 6.20, 6.50, 6.20, -2.82, 1.05, 0.12, mats.wallExt);
+  addWall(groups.site, 1.55, 3.80, 1.55, 6.20, -2.82, 1.05, 0.12, mats.wallExt);
+  addWall(groups.site, 6.50, 3.80, 6.50, 4.55, -2.82, 1.05, 0.12, mats.wallExt);
+  addWall(groups.site, 6.50, 5.45, 6.50, 6.20, -2.82, 1.05, 0.12, mats.wallExt);
+  addSwingDoor('site', 6.50, 5.45, 6.50, 4.55, 7.35, 5.45, -2.82, 1.05, mats.wallExt, 1.05);
+  addBox(groups.site, 1.65, 3.55, 6.40, 3.79, -2.82, 0.55, mats.woodDeck);
+  [1.65, 3.25, 4.85, 6.40].forEach(cx => {
+    addBox(groups.site, cx - 0.08, 3.80, cx + 0.08, 3.96, -1.77, 1.25, mats.woodFascia);
+    addBox(groups.site, cx - 0.08, 6.04, cx + 0.08, 6.20, -1.77, 1.25, mats.woodFascia);
+  });
+  addHipRoof3D(groups.site, 1.25, 3.50, 6.80, 6.50, -0.52, 0.85, 1.10);
+
+  // Undakan 3 (Area Umbaran di X = 1,55..6,50m)
+  addTrapezoidSlab(groups.site, xWestInner(0.04) + 0.26, 8.54, 0.04, xWestInner(3.32) + 0.26, 8.54, 3.32, -3.80, 0.49, mats.grassDark);
+  addBox(groups.site, 1.55, 0.55, 6.50, 3.10, -3.30, 0.06, mats.woodDeck);
+  addWall(groups.site, 1.55, 0.55, 6.50, 0.55, -3.25, 1.10, 0.06, mats.woodFascia);
+  addWall(groups.site, 1.55, 0.55, 1.55, 3.10, -3.25, 1.10, 0.06, mats.woodFascia);
+  addWall(groups.site, 6.50, 0.55, 6.50, 1.40, -3.25, 1.10, 0.06, mats.woodFascia);
+  addWall(groups.site, 6.50, 2.30, 6.50, 3.10, -3.25, 1.10, 0.06, mats.woodFascia);
+  addSwingDoor('site', 6.50, 2.30, 6.50, 1.40, 7.35, 2.30, -3.25, 1.10, mats.woodFascia, 1.05);
+
+  // Pagar Wiremesh Z=10m, Portal Gerbang Peternakan & 8 Pohon Buffer
+  const wWire = xWestInner(10.0) + 0.01, eWire = xEastInner(10.0) - 0.01;
+  addWall(groups.site, wWire, 10.0, 8.52, 10.0, -2.68, 0.50, 0.18, mats.stoneWall);
+  addWall(groups.site, wWire, 10.0, 8.48, 10.0, -2.18, 1.70, 0.03, mats.wiremeshMat);
+  addWall(groups.site, wWire, 10.0, 8.48, 10.0, -2.18, 0.06, 0.07, mats.metalDark);
+  addWall(groups.site, wWire, 10.0, 8.48, 10.0, -1.35, 0.05, 0.07, mats.metalDark);
+  addWall(groups.site, wWire, 10.0, 8.48, 10.0, -0.52, 0.06, 0.08, mats.metalDark);
+  for (let wx = wWire + 0.08; wx <= 8.40; wx += 1.38) addBox(groups.site, wx - 0.045, 9.95, wx + 0.045, 10.05, -2.30, 1.85, mats.metalDark);
+
+  addBox(groups.site, 8.44, 9.88, 8.60, 10.12, -2.65, 2.38, mats.stoneWall);
+  addBox(groups.site, 9.74, 9.88, 9.90, 10.12, -2.65, 2.38, mats.stoneWall);
+  addBox(groups.site, 8.38, 9.84, 9.96, 10.16, -0.27, 0.16, mats.stoneWall);
+  addBox(groups.site, 8.40, 9.86, 9.94, 10.14, -0.32, 0.05, mats.woodFascia);
+
+  addWall(doorGroups.site, 8.60, 10.0, 8.60, 8.86, -2.50, 2.05, 0.06, mats.doorLeaf);
+  addWall(doorGroups.site, 8.60, 10.0, 8.60, 8.86, -2.50, 0.08, 0.08, mats.metalDark);
+  addWall(doorGroups.site, 8.60, 10.0, 8.60, 8.86, -0.52, 0.08, 0.08, mats.metalDark);
+  addBox(doorGroups.site, 8.56, 8.82, 8.64, 8.90, -2.50, 2.05, mats.metalDark);
+  const gatePts = [];
+  for (let i = 0; i <= 20; i++) {
+    const a = (i / 20) * (Math.PI / 2);
+    gatePts.push(new THREE.Vector3(8.60 + Math.cos(a) * 1.14, -2.48, 10.0 - Math.sin(a) * 1.14));
+  }
+  doorGroups.site.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(gatePts), new THREE.LineBasicMaterial({ color: 0xf59e0b })));
+
+  addWall(groups.site, 9.88, 10.0, eWire, 10.0, -2.65, 0.50, 0.16, mats.stoneWall);
+  addWall(groups.site, 9.88, 10.0, eWire, 10.0, -2.15, 1.69, 0.04, mats.wiremeshMat);
+  addWall(groups.site, 9.88, 10.0, eWire, 10.0, -0.52, 0.06, 0.08, mats.metalDark);
+
+  addBox(groups.site, xWestInner(10.5) + 0.28, 10.18, 8.35, 10.48, -2.35, 1.15, mats.grassDark);
+  [0.35, 1.40, 2.45, 3.50, 4.55, 5.60, 6.65, 7.65].forEach((tx, idx) => {
+    addTree3D(groups.site, tx, -2.30, 10.55, (idx % 2 === 0) ? 3.5 : 3.8, 0.39, (idx % 2 === 0) ? 'round' : 'cone');
+  });
+
+  addTrapezoidSlab(groups.site, xWestInner(10.02) + 0.26, 8.54, 10.02, xWestInner(12.48) + 0.26, 8.54, 12.48, -2.65, 0.35, mats.grass);
+  addBox(groups.site, 0.4, 11.15, 3.6, 12.20, -2.30, 0.48, mats.woodDeck);
+  addBox(groups.site, 0.5, 11.23, 3.5, 12.12, -1.82, 0.38, mats.foliageLight);
+  addBox(groups.site, 4.2, 11.15, 7.35, 12.20, -2.30, 0.48, mats.woodDeck);
+  addBox(groups.site, 4.3, 11.23, 7.25, 12.12, -1.82, 0.38, mats.foliageLight);
+  addBox(groups.site, 7.58, 11.45, 8.42, 12.45, -2.30, 0.04, mats.wallAccent);
+
+  // ==================== 5C. KOLAM RENANG & TANGGA SAMPING KOLAM UTUH (100% BEBAS PIPA!) ====================
+  addBox(groups.site, 0.0, 12.50, 6.10, 16.49, -2.35, 1.82, mats.concrete);
+  addBox(groups.site, 6.10, 12.50, 7.55, 16.49, -2.35, 0.12, mats.concrete);
+  addBox(groups.site, 0.0, 12.50, 7.55, 16.49, -0.53, 0.08, mats.woodDeck);
+  addBox(groups.site, 0.35, 12.80, 6.05, 15.30, -0.44, 0.09, mats.water);
+
+  [[6.20, 6.72], [6.90, 7.42]].forEach(([sx1, sx2]) => {
+    addBox(groups.site, sx1, 12.95, sx2, 14.15, -0.45, 0.24, mats.bedSheet);
+    addBox(groups.site, sx1, 12.75, sx2, 13.02, -0.21, 0.18, mats.bedBlanket);
+  });
+
+  addSafetyRailing3D(groups.site, 0.04, 12.53, 7.53, 12.53, -0.45, 1.05, 6);
+  addSafetyRailing3D(groups.site, 0.04, 12.53, 0.04, 16.48, -0.45, 1.05, 3);
+  addSafetyRailing3D(groups.site, 7.53, 12.53, 7.53, 14.50, -0.45, 1.05, 2);
+  addSafetyRailing3D(groups.site, 7.53, 15.35, 7.53, 16.48, -0.45, 1.05, 1);
+
+  addBox(groups.site, 2.2, 15.95, 7.0, 16.22, -0.32, 0.15, mats.woodDeck);
+  addBox(groups.site, 2.2, 16.23, 7.0, 16.49, -0.17, 0.15, mats.woodDeck);
+
+  addBox(groups.site, 7.55, 14.50, 8.42, 15.35, -0.60, 0.15, mats.woodDeck);
+  addBox(groups.site, 7.55, 15.20, 8.38, 15.35, -2.30, 1.70, mats.concrete);
+  addSafetyRailing3D(groups.site, 7.53, 15.33, 8.40, 15.33, -0.45, 1.05, 1);
+  addSafetyRailing3D(groups.site, 8.40, 14.50, 8.40, 15.33, -0.45, 1.05, 1);
+
+  addSlantedBeam3D(groups.site, 7.64, -0.58, 14.52, 7.64, -2.30, 12.48, 0.08, 0.18, mats.metalDark);
+  addSlantedBeam3D(groups.site, 8.32, -0.58, 14.52, 8.32, -2.30, 12.48, 0.08, 0.18, mats.metalDark);
+
+  const numPoolSteps = 8, zStepStart = 14.50, zStepDepth = 0.255, yStepStart = -0.45, yStepDrop = (2.30 - 0.45) / numPoolSteps;
+  for (let ks = 0; ks < numPoolSteps; ks++) {
+    const kz2 = zStepStart - ks * zStepDepth, kz1 = kz2 - zStepDepth, kyTop = yStepStart - (ks + 1) * yStepDrop, zPost = (kz1 + kz2) / 2;
+    addBox(groups.site, 7.56, kz1, 8.42, kz2 + 0.02, kyTop - 0.08, 0.08, mats.woodDeck);
+    addBox(groups.site, 7.58, kz2 - 0.04, 8.40, kz2 + 0.02, kyTop - 0.02, yStepDrop + 0.02, mats.woodFascia);
+    addBox(groups.site, 8.36, zPost - 0.025, 8.41, zPost + 0.025, kyTop, 1.02, mats.metalDark);
+    if (ks >= 1) addBox(groups.site, 7.56, zPost - 0.025, 7.61, zPost + 0.025, kyTop, 1.02, mats.metalDark);
+  }
+  addBox(groups.site, 8.36, 12.45, 8.42, 12.51, -2.30, 1.05, mats.metalDark);
+  addBox(groups.site, 7.56, 12.45, 7.62, 12.51, -2.30, 1.05, mats.metalDark);
+  addSlantedBeam3D(groups.site, 8.39, 0.60, 14.50, 8.39, -1.25, 12.48, 0.06, 0.05, mats.metalDark);
+  addSlantedBeam3D(groups.site, 8.39, 0.12, 14.50, 8.39, -1.73, 12.48, 0.04, 0.04, mats.metalDark);
+  addSlantedBeam3D(groups.site, 7.58, 0.60, 14.50, 7.58, -1.25, 12.48, 0.06, 0.05, mats.metalDark);
+  addSlantedBeam3D(groups.site, 7.58, 0.12, 14.50, 7.58, -1.73, 12.48, 0.04, 0.04, mats.metalDark);
+
+  addBox(groups.site, 0.0, 16.50, 7.0, 30.49, -2.2, 2.04, mats.concrete);
+  addBox(groups.site, 7.01, 16.50, 7.55, 26.0, -1.95, 1.95, mats.concrete);
+  addBox(groups.site, 7.01, 16.50, 7.56, 26.0, -0.14, 0.14, mats.woodDeck);
+  addSafetyRailing3D(groups.site, 7.53, 16.50, 7.53, 26.00, 0.0, 1.05, 6);
+  addSafetyRailing3D(groups.site, 7.00, 26.00, 7.53, 26.00, 0.0, 1.05, 1);
+
+  // ==================== 5D. TEMBOK DEPAN TINGGI PRIVAT, 3 GERBANG & CARPORT ====================
+  addBox(groups.site, 0.0, 30.51, 5.48, 35.92, -0.33, 0.19, mats.floorService);
+  addBox(groups.site, 5.50, 30.51, 8.54, 35.92, -0.33, 0.18, mats.grass);
+  for (let st = 0; st < 5; st++) addBox(groups.site, 5.80, 31.15 + st * 0.9, 6.75, 31.75 + st * 0.9, -0.15, 0.04, mats.wallAccent);
+  addTree3D(groups.site, 7.68, -0.15, 32.15, 3.8, 0.54, 'round');
+  addTree3D(groups.site, 7.68, -0.15, 33.80, 3.5, 0.48, 'cone');
+
+  const yFront = -0.15, hFrontWall = 2.50;
+  [-0.18, 0.12, 5.45, 5.80, 6.75, 8.55, 9.92].forEach(px => addBox(groups.site, px - 0.14, 35.78, px + 0.14, 36.12, yFront, hFrontWall + 0.20, mats.stoneWall));
+  addWall(groups.site, -0.18, 35.95, 0.12, 35.95, yFront, hFrontWall, 0.20, mats.stoneWall);
+  addBox(groups.site, 5.30, 35.65, 10.10, 36.25, yFront + hFrontWall, 0.18, mats.stoneWall);
+  addBox(groups.site, 5.32, 35.68, 10.08, 36.22, yFront + hFrontWall - 0.06, 0.06, mats.woodFascia);
+  addWall(groups.site, 5.45, 35.95, 5.80, 35.95, yFront, hFrontWall, 0.20, mats.stoneWall);
+  // Segmen Tembok Masif Depan (X = 6,75..8,55m, Z = 35,95m) Tempat Box Camlock Sedot WC Ditanam Rapi
+  addWall(groups.site, 6.75, 35.95, 8.55, 35.95, yFront, 1.85, 0.20, mats.boundaryWall);
+  addLouverWall3D(groups.site, 6.85, 35.95, 8.45, 35.95, yFront + 1.85, 0.65, 10);
+
+  addWall(doorGroups.site, 0.20, 35.95, 5.35, 35.95, yFront, 2.30, 0.07, mats.metalDark);
+  addLouverWall3D(doorGroups.site, 0.28, 35.95, 5.25, 35.95, yFront + 0.15, 2.00, 22);
+  addSwingDoor('site', 5.80, 35.95, 6.75, 35.95, 5.80, 35.00, yFront, hFrontWall, mats.stoneWall, 2.25);
+  addSwingDoor('site', 8.60, 35.95, 9.75, 35.95, 8.60, 34.80, yFront, hFrontWall, mats.stoneWall, 2.25);
+
+  [[0.65, 2.35, mats.carRed], [3.15, 4.85, mats.carBlue]].forEach(([cx1, cx2, cMat]) => {
+    addBox(groups.site, cx1, 31.5, cx2, 34.9, -0.05, 0.55, cMat);
+    addBox(groups.site, cx1 + 0.15, 32.1, cx2 - 0.15, 34.1, 0.50, 0.48, mats.glass);
+    addBox(groups.site, cx1 + 0.18, 32.2, cx2 - 0.18, 34.0, 0.96, 0.05, cMat);
+  });
+
+  [[0.14, 35.2], [5.38, 35.2], [5.38, 31.8]].forEach(([kx, kz]) => addBox(groups.canopy, kx - 0.09, kz - 0.09, kx + 0.09, kz + 0.09, -0.14, 3.10, mats.metalDark));
+  addBox(groups.canopy, 0.02, 30.5, 5.55, 35.4, 2.92, 0.14, mats.metalDark);
+  addBox(groups.canopy, 0.00, 35.32, 5.59, 35.46, 2.90, 0.18, mats.woodFascia);
+  addBox(groups.canopy, 5.48, 30.5, 5.60, 35.46, 2.90, 0.18, mats.woodFascia);
+  addBox(groups.canopy, 0.15, 31.82, 5.40, 35.25, 3.065, 0.04, mats.glassSkylight);
+  addBox(groups.canopy, 4.02, 30.60, 5.40, 31.80, 3.065, 0.04, mats.glassSkylight);
+  for (let b = 0; b < 8; b++) addBox(groups.canopy, 0.15, 31.9 + b * 0.44, 5.40, 32.0 + b * 0.44, 2.85, 0.06, mats.woodFascia);
+
+  // ==================== 5E. ★ REKAYASA 5 JARINGAN PLUMBING MEP (SEPTIC BEBAS POHON, VENT GAS DI BELAKANG & BOX SEDOT DI TEMBOK MATI!) ====================
+  // 1. Air Bersih Dingin (Biru) & Air Panas Surya (Merah) + Jembatan Plafon Z = 22,85m
+  addBox(groups.utils, 7.38, 34.80, 7.98, 35.40, -0.25, 0.22, mats.utilWellBlue);
+  addCylinder3D(groups.utils, 7.68, -4.45, 35.10, 0.14, 4.35, mats.utilWellBlue);
+  addPipePath3D(groups.utils, [
+    [7.68, -0.45, 35.10],
+    [7.45, -0.45, 35.10],
+    [7.45, -0.45, 26.05],
+    [6.86, -0.45, 26.05],
+    [6.86, 8.15, 26.05],
+    [6.86, 8.15, 23.86],
+    [6.35, 8.15, 23.86]
+  ], 0.040, mats.utilWellBlue);
+
+  addBox(groups.utils, 5.25, 23.25, 6.48, 24.48, 6.75, 0.22, mats.stoneWall);
+  addCylinder3D(groups.utils, 5.86, 6.97, 23.86, 0.55, 1.32, mats.utilWellBlue);
+  addBox(groups.utils, 5.30, 24.58, 5.82, 25.02, 6.75, 0.36, mats.pantryMat);
+  [[5.35, 25.15], [6.45, 25.15], [5.35, 26.20], [6.45, 26.20]].forEach(([sx, sz]) => {
+    addBox(groups.utils, sx - 0.04, sz - 0.04, sx + 0.04, sz + 0.04, 6.75, 1.25, mats.metalDark);
+  });
+  addBox(groups.utils, 5.30, 25.10, 6.50, 26.25, 7.96, 0.06, mats.metalDark);
+  addCylinder3D(groups.utils, 5.90, 8.22, 25.22, 0.21, 1.18, mats.bedSheet, Math.PI / 2);
+  addSlantedBeam3D(groups.utils, 5.90, 8.20, 25.38, 5.90, 7.82, 26.35, 1.12, 0.06, mats.solarPanelMat);
+
+  addPipePath3D(groups.utils, [[5.86,7.00,24.42], [5.56,7.00,24.80], [6.72,7.00,24.80], [6.72,7.00,26.05], [6.72,-0.40,26.05]], 0.036, mats.utilWellBlue);
+  addPipePath3D(groups.utils, [[6.72,4.20,26.85], [6.72,4.20,24.30], [5.70,4.20,24.30]], 0.028, mats.utilWellBlue);
+  addPipePath3D(groups.utils, [[6.72,4.20,26.05], [2.65,4.20,26.05], [2.65,4.20,26.35]], 0.028, mats.utilWellBlue);
+  addPipePath3D(groups.utils, [[6.72,0.85,26.05], [3.45,0.85,26.05], [3.45,0.85,27.80]], 0.028, mats.utilWellBlue);
+  addPipePath3D(groups.utils, [[6.72,-0.40,26.05], [6.72,-0.40,18.50], [5.50,-0.40,19.20], [5.50,0.75,19.20]], 0.028, mats.utilWellBlue);
+  addPipePath3D(groups.utils, [[6.72,-0.40,18.50], [6.65,0.75,18.50]], 0.028, mats.utilWellBlue);
+
+  addPipePath3D(groups.utils, [[5.86,6.85,23.30], [5.10,6.52,22.85], [0.18,6.52,22.85], [0.18,0.85,22.40], [0.18,0.85,20.80]], 0.034, mats.utilWellBlue);
+  addPipePath3D(groups.utils, [[0.18,4.25,22.85], [0.18,4.25,18.55], [1.80,4.25,18.55], [1.80,4.25,17.00]], 0.030, mats.utilWellBlue);
+
+  addPipePath3D(groups.utils, [[5.90,8.22,25.22], [6.60,8.22,25.22], [6.60,6.46,25.22], [6.60,6.46,26.05], [6.60,0.95,26.05], [3.80,0.95,26.05], [3.80,0.95,26.55]], 0.028, mats.utilHotRed);
+  addPipePath3D(groups.utils, [[6.60,4.30,26.05], [6.60,4.30,25.50]], 0.026, mats.utilHotRed);
+  addPipePath3D(groups.utils, [[6.60,6.46,25.22], [5.10,6.46,22.85], [0.24,6.46,22.85], [0.24,4.20,17.05], [1.10,4.20,17.05]], 0.028, mats.utilHotRed);
+
+  // ★ 2. BIO SEPTIC TANK (Z = 20,00m) & SUMUR RESAPAN (Z = 18,45m) DI BAWAH PAD KORAL SERVIS (100% BEBAS POHON!)
+  addCylinder3D(groups.utils, 8.05, -3.15, 18.45, 0.46, 1.25, mats.utilGreyOrange); // Sumur Resapan di Z = 18,45m
+  addCylinder3D(groups.utils, 8.05, -1.66, 18.45, 0.22, 0.08, mats.metalDark);      // Manhole Inspeksi Sumur Resapan
+  addCylinder3D(groups.utils, 8.05, -2.95, 20.00, 0.50, 1.30, mats.utilSepticPurple); // Bio Septic Tank 2.000L di Z = 20,00m (0% Pohon!)
+  addCylinder3D(groups.utils, 8.05, -1.66, 19.75, 0.18, 0.10, mats.metalDark);      // Manhole Inspeksi Septic 1
+  addCylinder3D(groups.utils, 8.05, -1.66, 20.25, 0.18, 0.10, mats.metalDark);      // Manhole Inspeksi Septic 2
+
+  // ★ PIPA VENT PEMBUANGAN GAS BIO SEPTIC TANK (Ø 2" di X=7,62m, Z=18,08m -> Naik Vertikal + T-Cap Filter Karbon di Dekat Tangki, TIDAK KE DEPAN!)
+  addPipePath3D(groups.utils, [
+    [8.05, -1.75, 19.60],
+    [7.62, -1.75, 19.60],
+    [7.62, -1.75, 18.08],
+    [7.62, 0.65, 18.08]
+  ], 0.024, mats.utilVentLilac);
+  addBox(groups.utils, 7.50, 18.00, 7.74, 18.16, 0.63, 0.08, mats.metalDark); // T-Cap Filter Karbon Vent Gas
+  addLabel("★ PAD SERVIS BIO SEPTIC & RESAPAN (0% POHON)", "Bebas Akar Pohon + Pipa Vent Gas Filter Karbon di Z=18,1m!", 8.05, 0.85, 19.30, 'utils', 'util');
+
+  // Jalur Greywater (Oranye) Menuju Sumur Resapan Z = 18,45m
+  addPipePath3D(groups.utils, [[1.80,3.35,18.55], [0.18,3.35,18.55], [0.18,-0.55,18.55]], 0.040, mats.utilGreyOrange);
+  addPipePath3D(groups.utils, [[1.05,3.35,17.05], [0.18,3.35,17.05], [0.18,3.35,18.55]], 0.036, mats.utilGreyOrange);
+  addPipePath3D(groups.utils, [[0.35,0.05,22.10], [0.18,-0.35,22.10], [0.18,-0.62,16.65], [7.72,-1.85,16.65], [7.72,-2.10,18.45], [8.05,-2.10,18.45]], 0.042, mats.utilGreyOrange);
+  [20.85, 21.15, 21.45].forEach(wz => addPipePath3D(groups.utils, [[0.38,0.15,wz], [0.18,-0.45,wz]], 0.028, mats.utilGreyOrange));
+  addBox(groups.utils, 0.05, 16.52, 0.36, 16.82, -0.75, 0.35, mats.utilGreyOrange);
+
+  addPipePath3D(groups.utils, [[2.65,4.15,26.25], [2.65,3.32,26.15], [6.80,3.32,26.15]], 0.034, mats.utilGreyOrange);
+  addPipePath3D(groups.utils, [[5.70,3.45,24.30], [6.80,3.35,24.30], [6.80,3.32,26.15], [6.80,-0.50,26.15], [7.72,-0.82,26.15], [7.72,-2.10,18.45]], 0.042, mats.utilGreyOrange);
+  addPipePath3D(groups.utils, [[5.30,3.45,25.15], [6.80,3.34,25.15]], 0.034, mats.utilGreyOrange);
+  addPipePath3D(groups.utils, [[5.85,3.45,26.85], [6.80,3.34,26.85], [6.80,3.32,26.15]], 0.034, mats.utilGreyOrange);
+  addPipePath3D(groups.utils, [[3.45,0.05,27.80], [3.45,-0.42,26.35], [7.72,-0.82,26.35]], 0.038, mats.utilGreyOrange);
+  addBox(groups.utils, 6.40, 18.25, 6.88, 18.75, -0.58, 0.42, mats.utilGreyOrange);
+  addPipePath3D(groups.utils, [[5.50,0.75,19.20], [5.50,-0.35,19.20], [6.64,-0.38,18.50], [7.72,-1.65,18.45]], 0.038, mats.utilGreyOrange);
+
+  // Jalur Blackwater Kloset (Ungu) Menuju Bio Septic Tank Z = 20,00m
+  addPipePath3D(groups.utils, [[5.85,3.42,25.05], [5.05,3.32,25.05], [5.05,3.30,26.05], [5.05,-0.55,26.05], [8.05,-0.90,26.05], [8.05,-1.80,20.25]], 0.050, mats.utilSepticPurple);
+  addPipePath3D(groups.utils, [[3.55,0.02,27.05], [3.55,-0.45,27.05], [5.05,-0.50,27.05], [5.05,-0.55,26.05]], 0.046, mats.utilSepticPurple);
+  addPipePath3D(groups.utils, [[1.85,3.42,17.80], [0.25,3.32,17.80], [0.25,-0.60,17.80], [0.25,-0.68,16.85], [8.05,-1.80,16.85], [8.05,-1.80,19.75]], 0.050, mats.utilSepticPurple);
+  addPipePath3D(groups.utils, [[0.42,0.02,22.40], [0.25,-0.48,22.40], [0.25,-0.60,17.80]], 0.046, mats.utilSepticPurple);
+  addPipePath3D(groups.utils, [[8.05,-1.95,19.55], [8.05,-2.15,18.45]], 0.046, mats.utilSepticPurple);
+
+  // ★ JALUR PIPA SEDOT WC (PVC AW 3") DITANAM DI TEPI TAMAN (X = 8,36m) & BERAKHIR DI TEMBOK MATI DEPAN (X = 8,15m, Z = 35,85m -> BUKAN DI PINTU GERBANG!)
+  addPipePath3D(groups.utils, [
+    [8.05, -1.80, 20.00],
+    [8.36, -1.80, 20.00],
+    [8.36, -0.38, 35.55],
+    [8.15, -0.38, 35.55],
+    [8.15, 0.25, 35.85]
+  ], 0.036, mats.utilSepticPurple);
+  addBox(groups.utils, 8.02, 35.78, 8.28, 36.08, 0.12, 0.26, mats.utilSepticPurple); // Box Camlock Sedot WC Tertanam di Tembok Mati Depan
+  addLabel("★ BOX CAMLOCK SEDOT WC DI TEMBOK MATI", "Tertanam di Tembok X=8,15m (Pintu Gerbang 100% Bersih!)", 8.15, 1.15, 35.85, 'utils', 'util');
+
+  // 3. Panen Air Hujan (4.000L di Kolong Dek X = 6,82m) & Biodigester Sisi Barat (X = 0,72m)
+  addCylinder3D(groups.utils, 6.82, -2.22, 13.35, 0.56, 1.62, mats.utilRainCyan);
+  addCylinder3D(groups.utils, 6.82, -2.22, 14.85, 0.56, 1.62, mats.utilRainCyan);
+  addCylinder3D(groups.utils, 6.82, -2.22, 16.05, 0.14, 1.70, mats.utilRainCyan);
+  addPipePath3D(groups.utils, [[2.30,6.60,22.10], [6.92,6.60,22.10], [6.92,6.60,16.52], [6.92,-0.55,16.52], [6.82,-0.65,16.05], [6.82,-0.65,13.35]], 0.040, mats.utilRainCyan);
+  addPipePath3D(groups.utils, [[6.82,-2.15,13.35], [6.82,-2.45,13.35], [6.82,-2.45,10.10], [-0.56,-2.45,10.10]], 0.042, mats.utilRainCyan);
+  addPipePath3D(groups.utils, [[1.40,-2.45,10.10], [1.40,-3.15,5.00], [1.55,-2.60,5.00]], 0.034, mats.utilRainCyan);
+
+  addBox(groups.utils, 0.55, 4.35, 1.25, 5.00, -3.15, 0.45, mats.utilBioGreen);
+  addCylinder3D(groups.utils, 0.72, -3.95, 3.35, 0.68, 1.15, mats.utilBioGreen);
+  const bioDome = new THREE.Mesh(new THREE.SphereGeometry(0.68, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2), mats.utilBioGreen);
+  bioDome.position.set(0.72, -2.80, 3.35); groups.utils.add(bioDome);
+  addBox(groups.utils, 0.15, 1.45, 0.70, 2.25, -3.55, 0.50, mats.utilBioGreen);
+  addBox(groups.utils, 0.76, 1.45, 1.32, 2.25, -3.55, 0.50, mats.utilBioGreen);
+  addPipePath3D(groups.utils, [[1.55,-2.95,4.68], [0.90,-3.00,4.68], [0.72,-3.20,3.35], [0.72,-3.35,2.25]], 0.050, mats.utilBioGreen);
+  addPipePath3D(groups.utils, [[0.72,-2.25,3.35], [0.38,-2.25,3.35], [0.38,-3.10,3.35], [0.38,-2.85,8.20], [0.58,-2.85,8.20], [0.58,-1.55,8.20]], 0.030, mats.utilGasGold);
+
+  // 4. Siringan Keliling Sisi Tembok Lahan -> Bak Kontrol Terakhir (Pojok Kiri Belakang) -> Outlet Irigasi Belakang
+  addBox(groups.utils, -0.45, 10.04, 8.42, 10.16, -2.38, 0.12, mats.metalDark);
+  addCylinder3D(groups.utils, 0.15, -3.50, 10.10, 0.35, 1.25, mats.utilRainCyan);
+  addCylinder3D(groups.utils, 8.15, -3.50, 10.10, 0.35, 1.25, mats.utilRainCyan);
+  addBox(groups.utils, -0.78, 9.92, -0.35, 10.28, -2.55, 0.38, mats.utilWellBlue);
+  addPipePath3D(groups.utils, [[9.82,-0.25,35.50], [10.25,-2.45,10.10], [10.55,-3.58,0.25], [-0.72,-3.62,0.25]], 0.046, mats.utilRainCyan);
+  addPipePath3D(groups.utils, [[-0.08,-0.22,35.50], [-0.36,-1.65,18.00], [-0.56,-2.45,10.10], [-0.72,-3.62,0.25]], 0.055, mats.utilWellBlue);
+  addBox(groups.utils, -0.98, 0.05, -0.42, 0.52, -3.78, 0.52, mats.utilWellBlue);
+  addPipePath3D(groups.utils, [[-0.72, -3.64, 0.25], [-0.72, -3.68, -0.52]], 0.068, mats.utilWellBlue);
+
+  // ==================== 5F. ★ JARINGAN PIPA PENYIRAMAN POHON & TANAMAN (groups.irr — HIJAU LIMAU + 4 KERAN TAMAN 3D) ====================
+  // 1. ZONA IRIGASI 1 (Air Bersih): Menyiram 2 Pohon Taman Depan (Z=33,8m & 32,15m) + 3 Pohon Taman Samping (Z=28,4m, 25,6m, 22,8m)
+  //    Berhenti di Z = 22,50m (Utara Sekat Root-Barrier Z=21,25m) sehingga tidak melintasi atas Bio Septic Tank!
+  addPipePath3D(groups.irr, [
+    [7.45, -0.35, 34.80],
+    [7.82, -0.35, 34.20],
+    [7.82, -0.38, 30.50],
+    [7.82, -0.92, 28.40],
+    [7.82, -1.22, 25.60],
+    [7.82, -1.52, 22.80]
+  ], 0.028, mats.utilIrrLime);
+  // Cabang Nozzle ke Setiap Pohon Taman Depan & Samping
+  [[33.80, -0.15], [32.15, -0.15], [28.40, -0.75], [25.60, -1.05], [22.80, -1.35]].forEach(([pz, py]) => {
+    addPipePath3D(groups.irr, [[7.82, py - 0.16, pz], [7.98, py + 0.04, pz]], 0.020, mats.utilIrrLime);
+  });
+  addGardenTap3D(groups.irr, 7.25, -0.15, 34.20); // ★ Keran Taman 1 (Taman Depan)
+  addGardenTap3D(groups.irr, 7.72, -1.05, 24.20); // ★ Keran Taman 2 (Taman Samping Tengah)
+
+  // 2. Cabang Pipa Penyiraman ke Pohon Inner Courtyard (X=1,58m, Z=24,45m), Planter Box Depan Lt.2 (X=3,50m, Z=31,10m) & Tanaman Sky Deck
+  addPipePath3D(groups.irr, [
+    [6.72, -0.25, 26.05],
+    [1.58, -0.25, 26.05],
+    [1.58, 0.12, 24.75]
+  ], 0.024, mats.utilIrrLime);
+  addPipePath3D(groups.irr, [
+    [6.72, 3.65, 26.05],
+    [6.72, 3.65, 27.30],
+    [3.50, 3.65, 27.30],
+    [3.50, 4.05, 31.10]
+  ], 0.022, mats.utilIrrLime);
+  addPipePath3D(groups.irr, [
+    [6.72, 3.65, 23.00],
+    [5.80, 3.65, 18.20],
+    [4.80, 3.65, 18.20],
+    [4.80, 4.05, 17.30]
+  ], 0.020, mats.utilIrrLime);
+  addLabel("🌱 PIPA SIRAM POHON & KERAN TAMAN", "Menyiram 5 Pohon Depan/Samping, Courtyard & Planter Lt.2!", 7.82, 0.35, 25.60, 'irr', 'irr');
+
+  // 3. ZONA IRIGASI 2 (Pemanfaatan 2 Tangki Air Hujan 4.000L): Menyiram 2 Raised Planter Beds, 8 Pohon Buffer, & Pohon Peternakan
+  addPipePath3D(groups.irr, [
+    [6.82, -2.10, 13.35],
+    [6.82, -2.22, 11.65],
+    [0.65, -2.22, 11.65]
+  ], 0.030, mats.utilIrrLime);
+  // Pipa Drip Naik ke Dalam 2 Kotak Kebun Raised Planter Beds (Z = 11,65m)
+  addPipePath3D(groups.irr, [[2.00, -2.22, 11.65], [2.00, -1.42, 11.65], [0.75, -1.42, 11.65], [3.35, -1.42, 11.65]], 0.022, mats.utilIrrLime);
+  addPipePath3D(groups.irr, [[5.75, -2.22, 11.65], [5.75, -1.42, 11.65], [4.45, -1.42, 11.65], [7.10, -1.42, 11.65]], 0.022, mats.utilIrrLime);
+  // Sabuk Penyiraman 8 Pohon Buffer (Z = 10,55m) & Pohon Peneduh Undakan 1 (X = 7,68m, Z = 9,25m)
+  addPipePath3D(groups.irr, [
+    [6.82, -2.22, 11.65],
+    [6.82, -2.28, 10.55],
+    [0.35, -2.28, 10.55]
+  ], 0.026, mats.utilIrrLime);
+  addPipePath3D(groups.irr, [
+    [6.82, -2.28, 10.55],
+    [7.68, -2.28, 10.55],
+    [7.68, -2.60, 9.25]
+  ], 0.024, mats.utilIrrLime);
+  addGardenTap3D(groups.irr, 7.45, -2.30, 11.65); // ★ Keran Taman 3 (Area Kebun Raised Beds)
+  addGardenTap3D(groups.irr, 7.35, -2.65, 9.25);  // ★ Keran Taman 4 (Area Undakan 1 Peternakan)
+  addLabel("🌱 IRIGASI KEBUN & 8 POHON BUFFER (AIR HUJAN)", "Drip Raised Beds, 8 Pohon Buffer & Keran Kebun dari Tangki Hujan!", 4.20, -0.95, 11.65, 'irr', 'irr');
+  // ==================== 6. LANTAI 1 VILLA + ★ INNER COURTYARD UTUH 100% (1,24m × 2,90m) & TANGGA U GESER (20 NAIK) ====================
+  const y1 = 0.0, h1 = 3.40;
+  addBox(groups.f1, 0.0, 16.5, 7.0, 30.5, -0.16, 0.15, mats.floorCream);
+  addBox(groups.f1, 0.15, 16.58, 2.18, 18.98, -0.01, 0.02, mats.floorWood);    // Mushola
+  addBox(groups.f1, 0.15, 19.02, 2.18, 20.48, -0.01, 0.02, mats.floorService); // Gudang Lt.1
+  addBox(groups.f1, 0.15, 20.52, 2.18, 21.78, -0.01, 0.02, mats.floorBath);    // Area Wudhu
+  addBox(groups.f1, 0.15, 21.82, 2.18, 22.98, -0.01, 0.02, mats.floorBath);    // Toilet Keluarga
+  // INNER COURTYARD TETAP UTUH 100% (1,24m × 2,90m -> X: 0,96..2,20m, Z: 23,00..25,90m)
+  addBox(groups.f1, 0.96, 23.02, 2.18, 25.88, -0.01, 0.03, mats.grass);
+  addBox(groups.f1, 3.22, 26.02, 4.38, 28.48, -0.01, 0.02, mats.floorBath);    // KM Tamu
+  addBox(groups.f1, 4.42, 26.02, 6.85, 28.48, -0.01, 0.02, mats.floorWood);    // Kamar Tamu
+
+  // Dinding Keliling Lantai 1
+  addWall(groups.f1, 0.075, 16.50, 0.075, 30.50, y1, h1, 0.15, mats.wallExt);
+  addWall(groups.f1, 0.14, 16.575, 2.20, 16.575, y1, h1, 0.15, mats.wallExt);
+  addWall(groups.f1, 0.14, 30.425, 0.70, 30.425, y1, h1, 0.15, mats.wallExt);
+  addWall(groups.f1, 1.60, 30.425, 4.00, 30.425, y1, h1, 0.15, mats.wallExt);
+  addWindow3D(groups.f1, 4.00, 30.425, 6.40, 30.425, y1, 0.6, 1.9, h1, mats.wallExt);
+  addWall(groups.f1, 6.40, 30.425, 6.925, 30.425, y1, h1, 0.15, mats.wallExt);
+
+  [16.58, 21.2, 26.0].forEach(cz => addBox(groups.f1, 6.85, cz - 0.12, 7.00, cz + 0.12, y1, h1, mats.wallExt));
+  addSlidingDoor('f1', 6.925, 16.70, 6.925, 21.08, y1, 2.55, h1, mats.wallExt);
+  addSlidingDoor('f1', 6.925, 21.32, 6.925, 25.88, y1, 2.55, h1, mats.wallExt);
+  addWall(groups.f1, 6.925, 26.0, 6.925, 26.4, y1, h1, 0.15, mats.wallExt);
+  addWindow3D(groups.f1, 6.925, 26.4, 6.925, 28.2, y1, 0.75, 1.65, h1, mats.wallExt);
+  addWall(groups.f1, 6.925, 28.2, 6.925, 28.8, y1, h1, 0.15, mats.wallExt);
+  addWindow3D(groups.f1, 6.925, 28.8, 6.925, 30.2, y1, 0.65, 1.75, h1, mats.wallExt);
+  addWall(groups.f1, 6.925, 30.2, 6.925, 30.5, y1, h1, 0.15, mats.wallExt);
+
+  // Sekat Dalam Lantai 1
+  addWall(groups.f1, 0.14, 19.0, 2.2, 19.0, y1, h1, 0.12, mats.wallInt);
+  addWall(groups.f1, 0.14, 20.5, 1.1, 20.5, y1, h1, 0.12, mats.wallInt);
+  addWall(groups.f1, 1.8, 20.5, 2.2, 20.5, y1, h1, 0.12, mats.wallInt);
+  addWall(groups.f1, 2.2, 19.0, 2.2, 20.5, y1, h1, 0.12, mats.wallInt);
+  addLouverWall3D(groups.f1, 2.2, 20.5, 2.2, 21.8, y1, h1, 6);
+  addWall(groups.f1, 0.14, 21.8, 1.1, 21.8, y1, h1, 0.12, mats.wallInt);
+  addWall(groups.f1, 1.8, 21.8, 2.2, 21.8, y1, h1, 0.12, mats.wallInt);
+  addWall(groups.f1, 2.2, 21.8, 2.2, 23.0, y1, h1, 0.12, mats.wallInt);
+  addWall(groups.f1, 0.14, 23.0, 2.2, 23.0, y1, 2.35, 0.12, mats.wallInt);
+  addBox(groups.f1, 0.14, 21.8, 2.2, 23.0, 2.32, 0.08, mats.floorCream);
+  addWall(groups.f1, 2.2, 22.15, 2.2, 23.0, 2.35, 1.05, 0.12, mats.wallInt);
+
+  addWindow3D(groups.f1, 0.96, 25.90, 2.20, 25.90, y1, 0.0, 2.8, h1, mats.wallInt);
+  addSlidingDoor('f1', 2.20, 23.10, 2.20, 25.80, y1, 2.40, h1, mats.wallInt);
+
+  addWall(groups.f1, 3.2, 26.0, 6.86, 26.0, y1, h1, 0.15, mats.wallInt);
+  addWall(groups.f1, 3.2, 26.0, 3.2, 28.5, y1, h1, 0.12, mats.wallInt);
+  addWall(groups.f1, 4.4, 26.0, 4.4, 27.65, y1, h1, 0.12, mats.wallInt);
+  addWall(groups.f1, 3.2, 28.5, 3.35, 28.5, y1, h1, 0.12, mats.wallInt);
+  addWall(groups.f1, 4.0, 28.5, 4.6, 28.5, y1, h1, 0.12, mats.wallInt);
+  addWall(groups.f1, 5.4, 28.5, 6.86, 28.5, y1, h1, 0.12, mats.wallInt);
+  addWall(groups.f1, 0.14, 28.5, 1.5, 28.5, y1, 2.3, 0.15, mats.woodCabinet);
+
+  // KONSTRUKSI 3D TANGGA U GESER (20 KALI NAIK @ 17cm = +3,40m)
+  const stepH = 3.40 / 20;
+  for (let s = 1; s <= 3; s++) {
+    const sx2 = 1.73 - (s - 1) * 0.26, sx1 = sx2 - 0.26;
+    addBox(groups.f1, sx1, 25.92, sx2, 26.75, 0.0, s * stepH, mats.woodDeck);
+  }
+  addBox(groups.f1, 0.15, 26.33, 0.95, 26.75, 0.0, 4 * stepH, mats.woodDeck);
+  addBox(groups.f1, 0.15, 25.90, 0.95, 26.33, 0.0, 5 * stepH, mats.woodDeck);
+
+  addSlantedBeam3D(groups.f1, 0.55, 4.5 * stepH, 25.90, 0.55, 14.5 * stepH, 23.00, 0.76, 0.16, mats.concrete);
+  for (let k = 0; k < 10; k++) {
+    const stNum = 6 + k, sz2 = 25.90 - k * 0.29, sz1 = sz2 - 0.29, syTop = stNum * stepH;
+    addBox(groups.f1, 0.15, sz1, 0.95, sz2 + 0.01, syTop - 0.17, 0.17, mats.woodDeck);
+  }
+  addWall(groups.f1, 0.95, 23.00, 0.95, 25.90, 0.0, 2.40, 0.04, mats.glass);
+  addSlantedBeam3D(groups.f1, 0.95, 5 * stepH + 0.92, 25.90, 0.95, 15 * stepH + 0.92, 23.00, 0.05, 0.05, mats.woodFascia);
+
+  addBox(groups.f1, 0.15, 22.15, 0.55, 23.00, 2.35, (16 * stepH) - 2.35, mats.woodDeck);
+  addBox(groups.f1, 0.55, 22.15, 0.95, 23.00, 2.35, (17 * stepH) - 2.35, mats.woodDeck);
+  for (let m = 0; m < 3; m++) {
+    const stNum = 18 + m, sx1 = 0.95 + m * 0.35, sx2 = sx1 + 0.35, syTop = stNum * stepH;
+    addBox(groups.f1, sx1, 22.15, sx2 + 0.01, 23.00, 2.35, syTop - 2.35, mats.woodDeck);
+  }
+  addSlantedBeam3D(groups.f1, 0.95, 17 * stepH + 0.92, 23.00, 2.00, 20 * stepH + 0.92, 23.00, 0.05, 0.05, mats.woodFascia);
+  addLabel("★ COURTYARD UTUH 100% (1,24×2,90m) & TANGGA U GESER", "20 Naik @17cm Mengapit Luar Utara & Selatan Courtyard", 1.55, 2.65, 24.45, 'f1', 'highlight');
+
+  addTree3D(groups.f1, 1.58, 0.02, 24.45, 5.2, 0.44, 'round');
+
+  // Furnitur & Sanitair Lantai 1
+  addBox(groups.f1, 0.16, 27.95, 1.45, 28.42, 0.01, 0.95, mats.woodCabinet);
+  addBox(groups.f1, 3.80, 28.80, 6.40, 30.15, 0.012, 0.02, mats.rugMat);
+  addBox(groups.f1, 4.10, 28.70, 6.10, 29.25, 0.02, 0.75, mats.sofaMat);
+  addBox(groups.f1, 4.55, 29.45, 5.65, 29.90, 0.02, 0.42, mats.woodDeck);
+  addBox(groups.f1, 5.30, 26.30, 6.82, 27.70, 0.02, 0.56, mats.bedSheet);
+  addBox(groups.f1, 5.30, 26.30, 6.30, 27.70, 0.58, 0.06, mats.bedBlanket);
+  addBox(groups.f1, 4.50, 26.10, 5.05, 27.20, 0.02, 2.10, mats.woodCabinet);
+  addToilet3D(groups.f1, 3.55, 0.02, 27.05, Math.PI / 2);
+  addBox(groups.f1, 3.25, 27.55, 3.62, 28.10, 0.02, 0.82, mats.woodCabinet);
+  addWall(groups.f1, 3.25, 26.65, 4.35, 26.65, 0.02, 2.0, 0.04, mats.glass);
+
+  addBox(groups.f1, 3.40, 23.10, 6.35, 25.45, 0.012, 0.02, mats.rugMat);
+  addBox(groups.f1, 3.60, 23.20, 4.30, 25.25, 0.02, 0.75, mats.sofaMat);
+  addBox(groups.f1, 4.30, 24.55, 6.00, 25.25, 0.02, 0.75, mats.sofaMat);
+  addBox(groups.f1, 4.65, 23.55, 5.65, 24.25, 0.02, 0.42, mats.woodDeck);
+  addBox(groups.f1, 4.20, 25.68, 5.95, 25.92, 0.02, 0.52, mats.woodCabinet);
+  addBox(groups.f1, 4.45, 25.82, 5.70, 25.88, 0.65, 0.80, mats.metalDark);
+  addBox(groups.f1, 2.70, 19.35, 4.45, 20.35, 0.02, 0.76, mats.woodDeck);
+  [2.95, 3.55, 4.15].forEach(mx => {
+    addBox(groups.f1, mx - 0.16, 19.00, mx + 0.16, 19.28, 0.02, 0.48, mats.sofaMat);
+    addBox(groups.f1, mx - 0.16, 20.42, mx + 0.16, 20.70, 0.02, 0.48, mats.sofaMat);
+  });
+  addBox(groups.f1, 6.35, 16.85, 6.84, 21.10, 0.02, 0.90, mats.woodCabinet);
+  addBox(groups.f1, 6.35, 16.85, 6.84, 17.55, 0.02, 2.15, mats.metalDark);
+  addBox(groups.f1, 5.15, 17.75, 5.88, 21.10, 0.02, 0.92, mats.pantryMat);
+  [18.3, 19.3, 20.3].forEach(bz => addBox(groups.f1, 4.75, bz - 0.15, 5.05, bz + 0.15, 0.02, 0.65, mats.woodFascia));
+
+  addToilet3D(groups.f1, 0.42, 0.02, 22.40, Math.PI / 2);
+  addBox(groups.f1, 0.16, 20.75, 0.55, 21.55, 0.02, 0.75, mats.woodCabinet);
+  addBox(groups.f1, 0.16, 19.15, 0.58, 20.35, 0.02, 1.95, mats.woodCabinet);
+  addBox(groups.f1, 0.38, 16.85, 1.08, 18.65, 0.015, 0.02, mats.prayerMat);
+  addBox(groups.f1, 1.22, 16.85, 1.92, 18.65, 0.015, 0.02, mats.prayerMat);
+
+  addSwingDoor('f1', 0.70, 30.425, 1.60, 30.425, 0.70, 29.55, y1, h1, mats.wallExt);
+  addSwingDoor('f1', 4.60, 28.50, 5.40, 28.50, 4.60, 27.70, y1, h1, mats.wallInt);
+  addSwingDoor('f1', 4.00, 28.50, 3.35, 28.50, 4.00, 27.85, y1, h1, mats.wallInt);
+  addSwingDoor('f1', 4.40, 28.30, 4.40, 27.65, 3.75, 28.30, y1, h1, mats.wallInt);
+  addSwingDoor('f1', 3.15, 26.00, 2.25, 26.00, 3.15, 25.10, y1, h1, mats.wallInt);
+  addSwingDoor('f1', 1.80, 21.80, 1.10, 21.80, 1.80, 22.50, y1, 2.35, mats.wallInt);
+  addSwingDoor('f1', 1.80, 20.50, 1.10, 20.50, 1.80, 19.80, y1, h1, mats.wallInt);
+  addSlidingDoor('f1', 2.20, 16.70, 2.20, 18.80, y1, 2.35, h1, mats.wallInt);
+  addSlidingDoor('f1', 2.25, 16.575, 6.85, 16.575, y1, 2.55, h1, mats.wallExt);
+
+  // ==================== 7. LANTAI 2 VILLA (SELASAR SKY DECK TERTUTUP KACA + LOUVER & VOID TANGGA U PRESISI) ====================
+  const y2 = 3.40, h2 = 3.20;
+
+  addBox(groups.f2, 0.0, 16.50, 7.0, 22.15, y2 - 0.16, 0.15, mats.floorCream);
+  addBox(groups.f2, 2.00, 22.15, 7.0, 25.89, y2 - 0.16, 0.15, mats.floorCream);
+  addBox(groups.f2, 0.0, 25.90, 7.0, 30.49, y2 - 0.16, 0.15, mats.floorCream);
+  addBox(groups.f2, 0.0, 30.50, 4.0, 31.80, y2 - 0.18, 0.17, mats.floorCream);
+
+  addBox(groups.f2, 2.22, 16.52, 4.78, 18.18, 3.39, 0.02, mats.woodDeck);     // Balkon Master
+  addBox(groups.f2, 4.82, 16.52, 6.95, 18.18, 3.39, 0.02, mats.woodDeck);     // Sky Deck Keluarga
+  addBox(groups.f2, 0.15, 16.58, 2.18, 18.78, 3.39, 0.02, mats.floorBath);    // KM Master + Bathtub
+  addBox(groups.f2, 0.15, 18.82, 2.18, 21.78, 3.39, 0.02, mats.floorWood);    // Walk-in Closet Utuh 100%
+  addBox(groups.f2, 2.22, 18.22, 5.78, 21.78, 3.39, 0.02, mats.floorWood);    // Kamar Tidur Utama
+  addBox(groups.f2, 5.02, 23.02, 6.85, 24.68, 3.39, 0.02, mats.floorService); // Laundry
+  addBox(groups.f2, 5.02, 24.72, 6.85, 26.38, 3.39, 0.02, mats.floorBath);    // KM Anak
+  addBox(groups.f2, 5.02, 26.42, 6.85, 27.28, 3.39, 0.02, mats.floorService); // Janitor
+  addBox(groups.f2, 0.15, 25.92, 2.28, 27.30, 3.39, 0.02, mats.floorWood);    // R. Kerja Leter L (Bagian Dekat Void)
+  addBox(groups.f2, 0.15, 27.30, 2.98, 28.58, 3.39, 0.02, mats.floorWood);    // R. Kerja Leter L (Sayap Lebar)
+  addBox(groups.f2, 2.32, 25.92, 2.98, 27.28, 3.39, 0.02, mats.wallAccent);   // Ceruk Mini Pantry Selasar 2m
+  addBox(groups.f2, 0.15, 28.62, 2.95, 31.72, 3.39, 0.02, mats.floorWood);    // Kamar Anak 2 (Maju +1,3m)
+  addBox(groups.f2, 4.02, 27.32, 6.85, 30.42, 3.39, 0.02, mats.floorWood);    // Kamar Anak 1 (Kembar 3,0×3,2m)
+
+  addBox(groups.f2, 3.02, 30.52, 3.98, 31.78, 3.39, 0.42, mats.woodDeck);      // Dak Planter Box Hijau
+  addBox(groups.f2, 3.10, 30.60, 3.90, 31.70, 3.81, 0.35, mats.grassDark);
+
+  // Dinding Eksterior Barat Lantai 2
+  addWall(groups.f2, 0.075, 16.50, 0.075, 22.40, y2, h2, 0.15, mats.wallExt);
+  addWindow3D(groups.f2, 0.075, 22.40, 0.075, 25.55, y2, 0.85, 1.75, h2, mats.wallExt);
+  addLouverWall3D(groups.f2, 0.075, 22.50, 0.075, 25.45, y2 + 0.90, 1.65, 10);
+  addWall(groups.f2, 0.075, 25.55, 0.075, 31.80, y2, h2, 0.15, mats.wallExt);
+
+  addWindow3D(groups.f2, 0.14, 16.575, 2.20, 16.575, y2, 1.0, 1.4, h2, mats.wallExt);
+  addSafetyRailing3D(groups.f2, 2.20, 16.54, 6.96, 16.54, y2, 1.10, 4);
+  addSafetyRailing3D(groups.f2, 6.96, 16.54, 6.96, 18.20, y2, 1.10, 2);
+  addBox(groups.f2, 4.74, 16.55, 4.86, 18.2, y2, 2.2, mats.grassDark);
+
+  // ★ SELASAR SKY DECK (Dinding 90cm + Kaca Kedap Hujan + Secondary Skin Louver di X = 7,02m)
+  addWindow3D(groups.f2, 6.925, 18.20, 6.925, 23.00, y2, 0.90, 1.75, h2, mats.wallExt);
+  addLouverWall3D(groups.f2, 7.02, 18.25, 7.02, 22.95, y2 + 0.90, 1.75, 16);
+  addLabel("★ SELASAR SKY DECK (DINDING 90cm + KACA + LOUVER)", "Kedap Tempias Hujan Timur & Nyamuk, Tetap Terang & Teduh!", 6.95, y2 + 1.85, 20.60, 'f2', 'highlight');
+
+  addLouverWall3D(groups.f2, 6.925, 23.0, 6.925, 24.7, y2, h2, 6);
+  addWindow3D(groups.f2, 6.925, 24.7, 6.925, 26.4, y2, 1.1, 1.3, h2, mats.wallExt);
+  addLouverWall3D(groups.f2, 6.925, 26.4, 6.925, 27.3, y2, h2, 4);
+  addWall(groups.f2, 6.925, 27.3, 6.925, 27.8, y2, h2, 0.15, mats.wallExt);
+  addWindow3D(groups.f2, 6.925, 27.8, 6.925, 30.0, y2, 0.75, 1.65, h2, mats.wallExt);
+  addWall(groups.f2, 6.925, 30.0, 6.925, 30.5, y2, h2, 0.15, mats.wallExt);
+
+  addWall(groups.f2, 4.00, 30.425, 6.925, 30.425, y2, h2, 0.15, mats.wallExt);
+  addRosterPeekWall3D(groups.f2, 3.00, 4.00, 30.425, y2, h2);
+  addWindow3D(groups.f2, 2.925, 30.425, 2.925, 31.725, y2, 0.75, 1.65, h2, mats.wallExt);
+  addWall(groups.f2, 0.14, 31.725, 3.00, 31.725, y2, h2, 0.15, mats.wallExt);
+
+  // Sekat Internal Master Suite
+  addWall(groups.f2, 0.14, 18.8, 0.9, 18.8, y2, h2, 0.12, mats.wallInt);
+  addWall(groups.f2, 1.55, 18.8, 2.2, 18.8, y2, h2, 0.12, mats.wallInt);
+  addWall(groups.f2, 2.2, 16.58, 2.2, 20.3, y2, h2, 0.15, mats.wallInt);
+  addWall(groups.f2, 2.2, 21.05, 2.2, 21.8, y2, h2, 0.15, mats.wallInt);
+  addWall(groups.f2, 2.2, 18.2, 2.5, 18.2, y2, h2, 0.15, mats.wallExt);
+  addWall(groups.f2, 4.5, 18.2, 5.8, 18.2, y2, h2, 0.15, mats.wallExt);
+  addWall(groups.f2, 5.8, 18.2, 5.8, 21.8, y2, h2, 0.15, mats.wallInt);
+  addWall(groups.f2, 0.14, 21.8, 2.60, 21.8, y2, h2, 0.15, mats.wallInt);
+  addWall(groups.f2, 3.45, 21.8, 5.8, 21.8, y2, h2, 0.15, mats.wallInt);
+
+  addSafetyRailing3D(groups.f2, 0.15, 22.15, 1.98, 22.15, y2, 1.05, 2);
+  addSafetyRailing3D(groups.f2, 0.96, 23.00, 1.98, 23.00, y2, 1.05, 1);
+  addWindow3D(groups.f2, 2.20, 23.00, 2.20, 25.90, y2, 0.0, 2.8, h2, mats.wallInt);
+
+  addWall(groups.f2, 5.0, 23.0, 6.86, 23.0, y2, h2, 0.12, mats.wallInt);
+  addWall(groups.f2, 5.0, 23.85, 5.0, 25.55, y2, h2, 0.15, mats.wallInt);
+  addWall(groups.f2, 5.0, 26.25, 5.0, 26.50, y2, h2, 0.15, mats.wallInt);
+  addWall(groups.f2, 5.0, 24.7, 6.86, 24.7, y2, h2, 0.12, mats.wallInt);
+  addWall(groups.f2, 5.0, 26.4, 6.86, 26.4, y2, h2, 0.12, mats.wallInt);
+  addWall(groups.f2, 4.0, 27.3, 6.86, 27.3, y2, h2, 0.15, mats.wallInt);
+
+  addWindow3D(groups.f2, 0.15, 25.90, 2.30, 25.90, y2, 0.0, 2.8, h2, mats.wallInt);
+  addWall(groups.f2, 2.30, 25.9, 3.00, 25.9, y2, h2, 0.12, mats.wallInt);
+  addWall(groups.f2, 2.30, 25.9, 2.30, 27.3, y2, h2, 0.12, mats.wallInt);
+  addWall(groups.f2, 2.30, 27.3, 3.00, 27.3, y2, h2, 0.12, mats.wallInt);
+  addWall(groups.f2, 2.925, 28.15, 2.925, 28.60, y2, h2, 0.15, mats.wallInt);
+  addWall(groups.f2, 0.14, 28.60, 3.00, 28.60, y2, h2, 0.15, mats.wallInt);
+  addWall(groups.f2, 2.925, 28.60, 2.925, 28.80, y2, h2, 0.15, mats.wallInt);
+  addWall(groups.f2, 2.925, 29.60, 2.925, 30.45, y2, h2, 0.15, mats.wallInt);
+  addWall(groups.f2, 4.00, 27.30, 4.00, 27.90, y2, h2, 0.15, mats.wallInt);
+  addWall(groups.f2, 4.00, 28.70, 4.00, 30.45, y2, h2, 0.15, mats.wallInt);
+
+  // Tangga Monyet Besi + Safety Cage di Sudut Janitor ke Roof Hatch
+  addBox(groups.f2, 6.22, 27.18, 6.26, 27.24, y2, 3.55, mats.metalDark);
+  addBox(groups.f2, 6.68, 27.18, 6.72, 27.24, y2, 3.55, mats.metalDark);
+  for (let ld = 0; ld < 11; ld++) addBox(groups.f2, 6.24, 27.16, 6.70, 27.22, y2 + 0.30 + ld * 0.30, 0.035, mats.pantryMat);
+  [5.20, 5.75, 6.30].forEach(cy => {
+    const cage = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.04, 14, 1, true), mats.metalDark);
+    cage.position.set(6.47, cy, 26.92); groups.f2.add(cage);
+  });
+
+  // Furnitur & Sanitair Lengkap Lantai 2
+  const yf2 = 3.41;
+  addBox(groups.f2, 0.30, 16.70, 1.80, 17.35, yf2, 0.58, mats.bedSheet);
+  addBox(groups.f2, 1.50, 18.35, 2.10, 18.72, yf2, 0.82, mats.woodCabinet);
+  addToilet3D(groups.f2, 1.85, yf2, 17.80, -Math.PI / 2);
+  addWall(groups.f2, 0.85, 17.45, 0.85, 18.75, yf2, 2.0, 0.04, mats.glass);
+  addBox(groups.f2, 0.16, 18.90, 0.65, 21.70, yf2, 2.20, mats.woodCabinet);
+  addBox(groups.f2, 1.62, 18.90, 2.12, 20.25, yf2, 2.20, mats.woodCabinet);
+  addBox(groups.f2, 1.62, 21.10, 2.12, 21.70, yf2, 0.80, mats.woodCabinet);
+
+  addBox(groups.f2, 3.00, 18.85, 5.40, 21.15, 3.412, 0.02, mats.rugMat);
+  addBox(groups.f2, 3.75, 19.10, 5.72, 20.90, yf2 + 0.02, 0.60, mats.bedSheet);
+  addBox(groups.f2, 3.75, 19.10, 5.05, 20.90, yf2 + 0.62, 0.06, mats.bedBlanket);
+  addBox(groups.f2, 5.30, 18.55, 5.70, 18.95, yf2, 0.48, mats.woodCabinet);
+  addBox(groups.f2, 5.30, 21.05, 5.70, 21.45, yf2, 0.48, mats.woodCabinet);
+  addBox(groups.f2, 3.35, 19.35, 3.68, 20.65, yf2 + 0.02, 0.45, mats.woodDeck);
+  addBox(groups.f2, 2.28, 19.40, 2.52, 20.60, yf2, 0.55, mats.woodCabinet);
+  addBox(groups.f2, 2.34, 19.55, 2.42, 20.45, yf2 + 0.65, 0.72, mats.metalDark);
+  addBox(groups.f2, 2.60, 16.85, 4.10, 17.40, yf2, 0.65, mats.sofaMat);
+  addBox(groups.f2, 5.10, 16.80, 6.70, 17.65, yf2, 0.68, mats.sofaMat);
+
+  addBox(groups.f2, 2.85, 23.10, 4.80, 25.15, 3.412, 0.02, mats.rugMat);
+  addBox(groups.f2, 3.65, 23.15, 4.75, 25.00, yf2 + 0.02, 0.70, mats.sofaMat);
+  addBox(groups.f2, 3.15, 23.90, 3.85, 24.70, yf2 + 0.02, 0.42, mats.woodDeck);
+  addBox(groups.f2, 2.28, 23.45, 2.55, 24.85, yf2, 0.55, mats.woodCabinet);
+  addBox(groups.f2, 2.36, 23.65, 2.44, 24.65, yf2 + 0.65, 0.75, mats.metalDark);
+  addBox(groups.f2, 5.15, 24.05, 6.25, 24.60, yf2, 0.85, mats.bedSheet);
+  addBox(groups.f2, 5.10, 24.85, 5.45, 25.45, yf2, 0.82, mats.woodCabinet);
+  addToilet3D(groups.f2, 5.85, yf2, 25.05, 0);
+  addWall(groups.f2, 6.25, 24.75, 6.25, 26.35, yf2, 2.0, 0.04, mats.glass);
+  addBox(groups.f2, 5.65, 26.48, 6.10, 27.15, yf2, 0.55, mats.bedSheet);
+
+  addBox(groups.f2, 0.50, 26.05, 2.05, 26.55, yf2, 0.76, mats.woodCabinet);
+  addBox(groups.f2, 1.10, 26.68, 1.50, 27.05, yf2, 0.85, mats.sofaMat);
+  addBox(groups.f2, 0.16, 26.05, 0.42, 28.50, yf2, 2.10, mats.woodCabinet);
+  addBox(groups.f2, 0.50, 28.05, 2.25, 28.52, yf2, 0.68, mats.sofaMat);
+  addBox(groups.f2, 2.35, 25.98, 2.98, 27.22, yf2, 0.90, mats.pantryMat);
+  addBox(groups.f2, 2.35, 25.98, 2.75, 27.22, yf2 + 1.55, 0.65, mats.woodCabinet);
+  addBox(groups.f2, 2.45, 26.10, 2.85, 26.48, yf2 + 0.90, 0.05, mats.bedSheet);
+  addBox(groups.f2, 2.45, 26.65, 2.82, 27.00, yf2 + 0.90, 0.38, mats.metalDark);
+
+  addBox(groups.f2, 0.16, 28.68, 2.00, 29.12, yf2, 2.10, mats.woodCabinet);
+  addBox(groups.f2, 0.16, 29.55, 1.75, 30.95, yf2, 0.58, mats.bedSheet);
+  addBox(groups.f2, 0.65, 29.55, 1.75, 30.95, yf2 + 0.58, 0.06, mats.bedBlanket);
+  addBox(groups.f2, 1.62, 31.22, 2.82, 31.64, yf2, 0.75, mats.woodCabinet);
+
+  addBox(groups.f2, 5.00, 27.38, 6.82, 27.82, yf2, 2.10, mats.woodCabinet);
+  addBox(groups.f2, 4.12, 28.25, 5.75, 29.65, yf2, 0.58, mats.bedSheet);
+  addBox(groups.f2, 4.65, 28.25, 5.75, 29.65, yf2 + 0.58, 0.06, mats.bedBlanket);
+  addBox(groups.f2, 5.55, 29.92, 6.82, 30.34, yf2, 0.75, mats.woodCabinet);
+
+  addSwingDoor('f2', 2.60, 21.80, 3.45, 21.80, 2.60, 20.95, y2, h2, mats.wallInt);
+  addSwingDoor('f2', 2.20, 21.05, 2.20, 20.30, 1.45, 21.05, y2, h2, mats.wallInt);
+  addSwingDoor('f2', 1.55, 18.80, 0.90, 18.80, 1.55, 18.15, y2, h2, mats.wallInt);
+  addSlidingDoor('f2', 2.50, 18.20, 4.50, 18.20, y2, 2.40, h2, mats.wallExt);
+  addSlidingDoor('f2', 5.85, 18.20, 6.85, 18.20, y2, 2.40, h2, mats.wallExt);
+  addSwingDoor('f2', 5.00, 23.15, 5.00, 23.85, 5.70, 23.15, y2, h2, mats.wallInt);
+  addSwingDoor('f2', 5.00, 26.25, 5.00, 25.55, 5.70, 26.25, y2, h2, mats.wallInt);
+  addSwingDoor('f2', 5.00, 27.20, 5.00, 26.50, 5.70, 27.20, y2, h2, mats.wallInt);
+  addSwingDoor('f2', 2.925, 27.40, 2.925, 28.15, 2.18, 27.40, y2, h2, mats.wallInt);
+  addSwingDoor('f2', 4.00, 27.90, 4.00, 28.70, 4.80, 27.90, y2, h2, mats.wallInt);
+  addSwingDoor('f2', 2.925, 28.80, 2.925, 29.60, 2.15, 28.80, y2, h2, mats.wallInt);
+
+  addLabel("★ STEP 20 TIBA DI LANTAI 2 (+3,40m)", "Tepat di Depan Kamar Utama & R. TV; Courtyard Utuh 1,24×2,90m!", 1.85, y2 + 1.25, 22.60, 'f2', 'highlight');
+
+  // ==================== 8. PERATAPAN KOMPOSIT + TALANG SKYLIGHT + ROOF HATCH ====================
+  const yRoof = y2 + h2;
+  addSkylightWithGutter3D(groups.roof, 0.05, 22.15, 2.22, 25.90, yRoof);
+  addLabel("★ SKYLIGHT VOID + SABUK TALANG KELILING", "Talang Beton 35cm & Curb +42cm Cegah Air Atap Masuk!", 1.15, yRoof + 1.45, 24.10, 'roof', 'highlight');
+
+  addBox(groups.roof, 4.92, 22.95, 7.05, 26.45, yRoof, 0.15, mats.stoneWall);
+  addBox(groups.roof, 4.92, 26.45, 6.15, 27.35, yRoof, 0.15, mats.stoneWall);
+  addWall(groups.roof, 6.15, 26.45, 6.88, 26.45, yRoof + 0.15, 0.18, 0.08, mats.metalDark);
+  addWall(groups.roof, 6.15, 27.25, 6.88, 27.25, yRoof + 0.15, 0.18, 0.08, mats.metalDark);
+  addWall(groups.roof, 6.15, 26.45, 6.15, 27.25, yRoof + 0.15, 0.18, 0.08, mats.metalDark);
+  addSlantedBeam3D(groups.roof, 6.85, yRoof + 0.32, 26.85, 7.02, yRoof + 0.98, 26.85, 0.05, 0.78, mats.hatchMat);
+  addSafetyRailing3D(groups.roof, 5.02, 23.02, 7.00, 23.02, yRoof + 0.15, 0.95, 2);
+  addSafetyRailing3D(groups.roof, 5.02, 27.30, 7.00, 27.30, yRoof + 0.15, 0.95, 2);
+  addLouverWall3D(groups.roof, 6.96, 23.05, 6.96, 26.40, yRoof + 0.15, 1.10, 14);
+  for (let ms = 0; ms < 3; ms++) addBox(groups.roof, 4.78 + ms * 0.12, 23.25, 5.15, 23.85, yRoof + 0.15 + ms * 0.25, 0.08, mats.pantryMat);
+
+  addHipRoof3D(groups.roof, -0.16, 16.05, 7.45, 21.82, yRoof, 1.55, 1.8);
+  addHipRoof3D(groups.roof, 2.48, 21.82, 4.92, 26.15, yRoof, 1.12, 0.95);
+  addHipRoof3D(groups.roof, -0.16, 26.18, 4.92, 30.90, yRoof, 1.45, 1.55);
+  addHipRoof3D(groups.roof, 3.85, 27.32, 7.45, 30.90, yRoof, 1.25, 1.25);
+  addHipRoof3D(groups.roof, -0.14, 28.20, 3.45, 32.15, yRoof + 0.02, 1.15, 1.3);
+
+  // ==================== 9. KONTROL KAMERA & RENDER LOOP ====================
+  function toggleGroup(key) {
+    groups[key].visible = !groups[key].visible;
+    const btnMap = { f1: 'btnF1', f2: 'btnF2', roof: 'btnRoof', canopy: 'btnCanopy', utils: 'btnUtils', irr: 'btnIrr' };
+    if (btnMap[key]) document.getElementById(btnMap[key]).classList.toggle('active', groups[key].visible);
+  }
+
+  let xrayActive = false;
+  function setXrayState(state) {
+    xrayActive = state;
+    [[mats.soil,0.18],[mats.concrete,0.22],[mats.grass,0.42],[mats.wallExt,0.28],[mats.wallInt,0.25],[mats.floorCream,0.25],[mats.floorWood,0.28],[mats.floorBath,0.30],[mats.floorService,0.30]].forEach(([m, op]) => {
+      m.transparent = state; m.opacity = state ? op : 1.0; m.needsUpdate = true;
+    });
+    document.getElementById('btnXray').classList.toggle('active', state);
+  }
+  function toggleXray() { setXrayState(!xrayActive); }
+
+  let irrVisible = true;
+  function toggleIrr() {
+    irrVisible = !irrVisible;
+    groups.irr.visible = irrVisible;
+    document.getElementById('btnIrr').classList.toggle('active', irrVisible);
+  }
+
+  let doorsVisible = true;
+  function toggleDoors() {
+    doorsVisible = !doorsVisible;
+    doorGroups.site.visible = doorsVisible; doorGroups.f1.visible = doorsVisible; doorGroups.f2.visible = doorsVisible;
+    document.getElementById('btnDoors').classList.toggle('active', doorsVisible);
+  }
+
+  let labelsVisible = true;
+  function toggleLabels() {
+    labelsVisible = !labelsVisible;
+    document.getElementById('btnLabels').classList.toggle('active', labelsVisible);
+    labelsContainer.style.display = labelsVisible ? 'block' : 'none';
+  }
+
+  const cameraViews = {
+    septicAndIrrigation: { pos: [16.8, 5.8, 21.5],  target: [7.8, -0.8, 21.5], openRoof: false, showF2: true,  xray: true },
+    frontGateCamlock:    { pos: [8.5, 3.2, 38.5],   target: [8.1, -0.3, 35.8], openRoof: true,  showF2: false, xray: false },
+    selasarAndPoolStair: { pos: [16.5, 6.2, 13.5],  target: [6.5, 1.8, 17.5], openRoof: false, showF2: true,  xray: false },
+    farmAccessDigester:  { pos: [14.5, 4.8, 2.5],   target: [3.8, -2.5, 5.2], openRoof: false, showF2: true,  xray: true },
+    uStairCourtyard:     { pos: [7.2, 9.2, 29.5],   target: [1.4, 2.3, 24.4], openRoof: true,  showF2: true,  xray: false },
+    rearDrainOutlet:     { pos: [-9.5, 4.5, -6.5],  target: [3.2, -2.5, 4.5], openRoof: false, showF2: true,  xray: true },
+    allPlumbingXray:     { pos: [19.5, 9.5, 23.5],  target: [3.8, 1.5, 22.0], openRoof: false, showF2: true,  xray: true },
+    roofMaintenance:     { pos: [13.5, 12.8, 30.5], target: [5.5, 6.8, 25.2], openRoof: false, showF2: true,  xray: false }
+  };
+
+  let animTargetPos = null, animTargetLook = null;
+  function setCameraView(viewKey) {
+    const v = cameraViews[viewKey];
+    if (!v) return;
+    groups.f2.visible = v.showF2;
+    groups.roof.visible = !v.openRoof;
+    setXrayState(!!v.xray);
+    document.getElementById('btnF2').classList.toggle('active', groups.f2.visible);
+    document.getElementById('btnRoof').classList.toggle('active', groups.roof.visible);
+    animTargetPos = new THREE.Vector3(...v.pos);
+    animTargetLook = new THREE.Vector3(...v.target);
+  }
+
+  const tempV = new THREE.Vector3();
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    if (animTargetPos && animTargetLook) {
+      camera.position.lerp(animTargetPos, 0.08);
+      controls.target.lerp(animTargetLook, 0.08);
+      if (camera.position.distanceTo(animTargetPos) < 0.08) { animTargetPos = null; animTargetLook = null; }
+    }
+    if (labelsVisible) {
+      const wHalf = window.innerWidth / 2, hHalf = window.innerHeight / 2;
+      labelList.forEach(item => {
+        if (item.floorKey !== 'all' && groups[item.floorKey] && !groups[item.floorKey].visible) {
+          item.el.style.display = 'none'; return;
+        }
+        tempV.copy(item.pos); tempV.project(camera);
+        if (tempV.z < 1) {
+          item.el.style.display = 'block';
+          item.el.style.left = `${(tempV.x * wHalf) + wHalf}px`;
+          item.el.style.top = `${-(tempV.y * hHalf) + hHalf}px`;
+        } else { item.el.style.display = 'none'; }
+      });
+    }
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+</script>
+</body>
+</html>
